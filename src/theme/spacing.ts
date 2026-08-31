@@ -22,3 +22,4 @@ export const touchTarget = {
   minWidth: 48,
   minHeight: 48,
 };
+

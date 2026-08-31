@@ -185,3 +185,4 @@ export const SEED_DAILY_QUESTS: DailyQuest[] = [
     isCompleted: false,
   },
 ];
+

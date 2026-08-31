@@ -54,3 +54,4 @@ export const colors = {
 };
 
 export type ThemeMode = 'light' | 'dark';
+

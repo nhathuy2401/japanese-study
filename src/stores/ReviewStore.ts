@@ -94,3 +94,4 @@ export class ReviewStore {
     this.undoHistory = null;
   }
 }
+

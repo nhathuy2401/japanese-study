@@ -104,3 +104,4 @@ export interface DailyQuest {
   xpReward: number;
   isCompleted: boolean;
 }
+

@@ -324,3 +324,4 @@ const styles = StyleSheet.create({
     color: colors.dark.textPrimary,
   },
 });
+

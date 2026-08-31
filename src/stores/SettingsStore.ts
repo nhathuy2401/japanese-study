@@ -89,3 +89,4 @@ export class SettingsStore {
     return maskApiKey(this.geminiApiKey);
   }
 }
+

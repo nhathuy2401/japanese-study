@@ -45,3 +45,4 @@ export class ProgressStore {
     return this.dailyQuests.filter((q) => q.isCompleted).length;
   }
 }
+
