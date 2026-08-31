@@ -1,0 +1,222 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./nihongo_local.db"
+}
+
+model Level {
+  id             String         @id
+  title          String
+  sortOrder      Int            @map("sort_order")
+  units          Unit[]
+  grammarPoints  GrammarPoint[]
+  kanjiList      Kanji[]
+  vocabularies   Vocabulary[]
+
+  @@map("levels")
+}
+
+model Unit {
+  id          String   @id
+  levelId     String   @map("level_id")
+  title       String
+  description String?
+  sortOrder   Int      @map("sort_order")
+  level       Level    @relation(fields: [levelId], references: [id], onDelete: Cascade)
+  lessons     Lesson[]
+
+  @@index([levelId, sortOrder])
+  @@map("units")
+}
+
+model Lesson {
+  id               String       @id
+  unitId           String       @map("unit_id")
+  type             String       // grammar, kanji, pitch, mixed
+  title            String
+  estimatedMinutes Int?         @map("estimated_minutes")
+  contentVersion   Int          @default(1) @map("content_version")
+  sortOrder        Int          @map("sort_order")
+  unit             Unit         @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  lessonItems      LessonItem[]
+
+  @@index([unitId, sortOrder])
+  @@map("lessons")
+}
+
+model GrammarPoint {
+  id                 String   @id
+  levelId            String   @map("level_id")
+  pattern            String
+  meaningVi          String   @map("meaning_vi")
+  formationJson      String   @map("formation_json") // JSON array of formation rules
+  nuanceJson         String?  @map("nuance_json")    // JSON array of badges: politeness, written/spoken
+  commonMistakesJson String?  @map("common_mistakes_json")
+  tagsJson           String?  @map("tags_json")
+  level              Level    @relation(fields: [levelId], references: [id], onDelete: Cascade)
+
+  @@map("grammar_points")
+}
+
+model Kanji {
+  id             String   @id
+  character      String   @unique
+  levelId        String?  @map("level_id")
+  meaningsViJson String   @map("meanings_vi_json")
+  onyomiJson     String?  @map("onyomi_json")
+  kunyomiJson    String?  @map("kunyomi_json")
+  radicalsJson   String?  @map("radicals_json")
+  strokeCount    Int?     @map("stroke_count")
+  pitchNote      String?  @map("pitch_note")
+  mnemonic       String?
+  level          Level?   @relation(fields: [levelId], references: [id], onDelete: SetNull)
+
+  @@map("kanji")
+}
+
+model Vocabulary {
+  id               String   @id
+  expression       String
+  reading          String
+  meaningVi        String   @map("meaning_vi")
+  levelId          String?  @map("level_id")
+  pitchPatternJson String?  @map("pitch_pattern_json") // e.g. {"type": "heiban", "pitchNumber": 0, "moraPitches": ["L", "H", "H"]}
+  audioAsset       String?  @map("audio_asset")
+  tagsJson         String?  @map("tags_json")
+  level            Level?   @relation(fields: [levelId], references: [id], onDelete: SetNull)
+
+  @@map("vocabulary")
+}
+
+model Example {
+  id         String   @id
+  japanese   String
+  reading    String?
+  meaningVi  String   @map("meaning_vi")
+  audioAsset String?  @map("audio_asset")
+  sourceNote String?  @map("source_note")
+
+  @@map("examples")
+}
+
+model LessonItem {
+  lessonId  String  @map("lesson_id")
+  itemType  String  @map("item_type") // grammar, kanji, vocab, pitch, quiz
+  itemId    String  @map("item_id")
+  sortOrder Int     @map("sort_order")
+  lesson    Lesson  @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@id([lessonId, itemType, itemId])
+  @@map("lesson_items")
+}
+
+// User progress & SRS models
+model StudyProgress {
+  contentType   String    @map("content_type") // lesson, grammar, kanji, vocab
+  contentId     String    @map("content_id")
+  status        String    // locked, available, learning, learned
+  mastery       Float     @default(0)
+  lastStudiedAt DateTime? @map("last_studied_at")
+
+  @@id([contentType, contentId])
+  @@map("study_progress")
+}
+
+model SrsCard {
+  id             String      @id
+  contentType    String      @map("content_type") // grammar, kanji, vocab, cloze
+  contentId      String      @map("content_id")
+  cardType       String      @map("card_type")    // recognition, recall, audio
+  dueAt          DateTime    @map("due_at")
+  stability      Float       @default(0)
+  difficulty     Float       @default(0)
+  reps           Int         @default(0)
+  lapses         Int         @default(0)
+  state          String      // new, learning, review, relearning
+  lastReviewedAt DateTime?   @map("last_reviewed_at")
+  reviewLogs     ReviewLog[]
+
+  @@index([dueAt, contentType])
+  @@map("srs_cards")
+}
+
+model ReviewLog {
+  id                String   @id
+  cardId            String   @map("card_id")
+  rating            Int      // 1: Again, 2: Hard, 3: Good, 4: Easy
+  elapsedMs         Int?     @map("elapsed_ms")
+  reviewedAt        DateTime @map("reviewed_at")
+  previousStateJson String   @map("previous_state_json")
+  card              SrsCard  @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  @@map("review_logs")
+}
+
+model Note {
+  id         String   @id
+  targetType String?  @map("target_type") // grammar, kanji, vocab
+  targetId   String?  @map("target_id")
+  bodyMd     String   @map("body_md")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@map("notes")
+}
+
+model DiaryEntry {
+  id             String   @id
+  entryDate      String   @map("entry_date") // YYYY-MM-DD
+  japanese       String
+  contextVi      String?  @map("context_vi")
+  aiFeedbackJson String?  @map("ai_feedback_json")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@map("diary_entries")
+}
+
+model Recording {
+  id         String   @id
+  targetType String   @map("target_type")
+  targetId   String   @map("target_id")
+  localUri   String   @map("local_uri")
+  durationMs Int?     @map("duration_ms")
+  selfScore  Int?     @map("self_score")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@map("recordings")
+}
+
+model StudySession {
+  id              String    @id
+  sessionType     String    @map("session_type") // lesson, review, quick5, pitch
+  startedAt       DateTime  @map("started_at")
+  completedAt     DateTime? @map("completed_at")
+  correctCount    Int       @default(0) @map("correct_count")
+  totalCount      Int       @default(0) @map("total_count")
+  durationSeconds Int       @default(0) @map("duration_seconds")
+
+  @@map("study_sessions")
+}
+
+model AppSetting {
+  key       String   @id
+  valueJson String   @map("value_json")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("app_settings")
+}
+
+model AiCache {
+  cacheKey     String    @id @map("cache_key")
+  feature      String
+  model        String
+  responseJson String    @map("response_json")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  expiresAt    DateTime? @map("expires_at")
+
+  @@map("ai_cache")
+}
