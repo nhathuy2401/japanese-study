@@ -161,6 +161,16 @@ Dạng luyện tập:
 - Từ một câu đã lưu, người dùng có thể tự chọn phần cần che để tạo thẻ cloze.
 - Liên kết hai chiều: câu → ngữ pháp/kanji và ngữ pháp/kanji → câu.
 
+### 4.8. Vocabulary JLPT — tab học từ vựng riêng
+
+- Tích hợp [JLPT Vocabulary API](https://jlpt-vocab-api.vercel.app/) qua REST, hỗ trợ dữ liệu N5 → N1.
+- Tab `Từ vựng` cho phép chọn cấp độ, tìm theo từ tiếng Nhật và học theo bộ tối đa 20 flashcard.
+- Mặt trước chỉ hiện từ; mặt sau hiện furigana, romaji và nghĩa tiếng Anh do API cung cấp.
+- Người học tự chấm `Quên`, `Khó`, `Đã nhớ`; từ `Quên/Khó` được đưa vào vòng lặp lại trong cùng phiên.
+- Validate response bằng Zod, timeout request, thông báo lỗi thân thiện và nút thử lại.
+- Không dịch tự động nghĩa tiếng Anh thành tiếng Việt để tránh lưu bản dịch máy như nội dung chuẩn; bản sau có thể bổ sung lớp nghĩa tiếng Việt đã kiểm duyệt.
+- Dữ liệu đã tải giữ trong session MobX; bước tiếp theo là cache SQLite và chuyển từ đã học thành SRS card bền vững.
+
 ## 5. Một số tính năng thú vị
 
 ### Daily Quest
@@ -383,6 +393,7 @@ app/
     index.tsx                 # Hôm nay
     learn.tsx                 # Lộ trình
     review.tsx                # SRS
+    vocabulary.tsx            # Flashcard từ vựng JLPT N5–N1
     notebook.tsx              # Tra cứu/sổ tay
     settings.tsx
   lesson/[lessonId].tsx
@@ -397,6 +408,7 @@ src/
     kanji/
     pitch/
     review/
+    vocabulary/
     diary/
     ai-tutor/
   db/
@@ -694,6 +706,8 @@ Tabs
   │   └─ Level → Unit → Lesson → Kết quả
   ├─ Ôn tập
   │   └─ Chọn bộ thẻ → Phiên ôn → Tổng kết
+  ├─ Từ vựng
+  │   └─ Chọn JLPT → Tìm/chọn bộ từ → Flashcard → Tự chấm
   ├─ Sổ tay
   │   ├─ Tìm kiếm
   │   ├─ Sentence Mine
@@ -803,6 +817,153 @@ Tabs
 
 **Hoàn thành khi:** toàn bộ đường học N5→N2 có nội dung tối thiểu, liên kết chéo và checkpoint; restore từ backup được kiểm thử.
 
+### Backlog chi tiết cho 8 nhóm chức năng
+
+Thứ tự ưu tiên triển khai được sắp theo quan hệ phụ thuộc, không chỉ theo thứ tự màn hình. `P0` là lõi cần có để tạo một vòng học hoàn chỉnh; `P1` hoàn thiện trải nghiệm chính; `P2` là tính năng mở rộng sau khi dữ liệu và lesson engine đã ổn định.
+
+| # | Nhóm chức năng | Ưu tiên | Phụ thuộc chính | Mốc triển khai |
+|---:|---|---|---|---|
+| 1 | SQLite/persistence | P0 | Compatibility spike Prisma/Expo | Giai đoạn 0 |
+| 2 | Lesson engine động | P0 | SQLite, content schema | Giai đoạn 1 |
+| 3 | SRS thật | P0 | SQLite, lesson engine | Giai đoạn 1 |
+| 4 | Audio/recording | P1 | SQLite, lesson engine, file storage | Giai đoạn 2 |
+| 5 | Onboarding | P0 | Settings/progress repository | Giai đoạn 1 |
+| 6 | Search + chi tiết Grammar/Kanji | P1 | Content đã seed, SQLite index | Giai đoạn 1–2 |
+| 7 | Backup/restore | P1 | Schema và migration ổn định | Giai đoạn 4 |
+| 8 | Diary, Detective, Kanji Garden | P2 | Lesson engine, SRS, search/detail | Giai đoạn 4 |
+
+#### 1. SQLite và persistence
+
+**Phạm vi:** thay toàn bộ dữ liệu giả hoặc state chỉ nằm trong bộ nhớ bằng nguồn dữ liệu local bền vững; Prisma repository là cổng truy cập duy nhất.
+
+- Chốt tổ hợp Expo SDK, Prisma Client và SQLite driver bằng compatibility spike trên Android/iOS.
+- Tạo migration, seed version, database initializer và cơ chế chạy migration idempotent khi app khởi động.
+- Hoàn thiện repository cho content, progress, settings, review log, SRS card, note, favorite và recording metadata.
+- Dùng transaction cho các luồng nhiều bước như hoàn tất lesson → ghi kết quả → cập nhật progress → tạo thẻ SRS.
+- Thêm trạng thái loading/empty/error và cơ chế phục hồi khi migration hoặc transaction thất bại.
+- Test CRUD, unique/index, rollback, nâng schema và dữ liệu còn nguyên sau kill/restart.
+
+**Nghiệm thu:** cài mới tạo database đúng schema; mở lại app giữ nguyên tiến độ; migration từ fixture phiên bản trước không mất dữ liệu; component không gọi Prisma trực tiếp.
+
+#### 2. Lesson engine động
+
+**Phạm vi:** một engine dùng chung có thể render lesson từ dữ liệu thay vì hard-code từng màn hình.
+
+- Định nghĩa schema `LessonDefinition` có version, level/unit, prerequisites, estimated time và danh sách block/exercise.
+- Hỗ trợ block nội dung: text, grammar explanation, vocabulary, kanji, example, image, audio và pitch.
+- Hỗ trợ bài tập MVP: multiple choice, cloze, sentence ordering, error correction và self-rating.
+- Xây registry `type -> renderer/grader`, validation bằng Zod và fallback an toàn cho block chưa được app hỗ trợ.
+- Tạo `SessionStore` điều phối resume, submit, feedback, retry, skip, complete và checkpoint.
+- Lưu session draft sau mỗi câu để đóng app giữa bài vẫn tiếp tục được; engine phát sự kiện chuẩn cho progress và SRS.
+- Viết fixture lesson cho Kana, Grammar và Kanji; test grading tách khỏi UI.
+
+**Nghiệm thu:** thêm một lesson mới chỉ bằng seed/content file, không sửa screen; resume đúng câu đang học; content lỗi bị chặn khi import/seed và không làm crash phiên học.
+
+#### 3. SRS thật
+
+**Phạm vi:** thay lịch ôn minh họa bằng scheduler có trạng thái thẻ, hàng đợi đến hạn và review log đầy đủ.
+
+- Chọn FSRS làm thuật toán mặc định; đóng gói scheduler sau interface để có thể thay hoặc nâng phiên bản.
+- Lưu trạng thái cần thiết như `due`, `stability`, `difficulty`, `reps`, `lapses`, `state` và `lastReview`.
+- Tạo thẻ từ kết quả lesson theo entity nguồn; chống tạo trùng thẻ cho cùng nội dung/template.
+- Xây queue theo ngày, timezone và loại nội dung; hỗ trợ giới hạn bài mới, review trộn và thứ tự ưu tiên.
+- Chấm `Quên/Khó/Được/Dễ`, hiển thị thời gian ôn dự kiến, ghi `ReviewLog` và hỗ trợ undo lần chấm gần nhất bằng transaction.
+- Thêm relearning, leech threshold, bury sibling và thống kê retention/workload cơ bản.
+- Dùng clock cố định trong unit test để kiểm tra boundary ngày, đổi timezone, lịch quá hạn và chuỗi rating.
+
+**Nghiệm thu:** cùng một input luôn tạo cùng lịch; không mất hoặc nhân đôi lượt ôn sau restart; undo khôi phục cả card và log; hàng đợi chỉ lấy đúng thẻ đến hạn.
+
+#### 4. Audio và recording
+
+**Phạm vi:** phát audio mẫu, loop đoạn, thu giọng người học và quản lý file hoàn toàn local.
+
+- Tạo `AudioService` quản lý một player dùng chung, preload/cleanup, tốc độ phát, seek và loop A–B.
+- Xin quyền microphone đúng thời điểm, giải thích khi bị từ chối và dẫn tới cài đặt hệ thống khi cần.
+- Thiết kế state machine `idle -> preparing -> recording -> stopped -> playing/error` để chống bấm lặp và xung đột player/recorder.
+- Lưu file trong thư mục app; SQLite chỉ giữ URI, duration, lesson/entity liên quan, ngày tạo và dung lượng.
+- Hỗ trợ nghe mẫu → thu → nghe lại → phát đối chiếu → tự chấm; waveform có thể dùng dữ liệu amplitude giản lược ở MVP.
+- Thêm trang quản lý dung lượng, xóa từng bản thu/xóa hàng loạt và dọn orphan file.
+- Test ngắt cuộc gọi, app chuyển background, thiếu quyền, thiếu dung lượng và file nguồn không tồn tại.
+
+**Nghiệm thu:** audio mẫu phát được offline; bản thu còn dùng được sau restart; dừng/thoát màn hình giải phóng tài nguyên; xóa bản thu loại bỏ cả file và metadata.
+
+#### 5. Onboarding
+
+**Phạm vi:** thiết lập trải nghiệm ban đầu và tạo kế hoạch học đầu tiên, không yêu cầu tài khoản.
+
+- Luồng gồm: chào mừng → mục tiêu → trình độ/bài test tùy chọn → thời lượng/ngày thi → furigana/romaji → quyền thông báo tùy chọn → xác nhận kế hoạch.
+- Lưu draft sau mỗi bước; cho quay lại, thoát và tiếp tục mà không mất lựa chọn.
+- Sinh `StudyPlan` ban đầu và điểm bắt đầu trong lộ trình; người đã biết tiếng Nhật có thể bỏ qua Kana hoặc làm placement test.
+- Chỉ hỏi microphone khi lần đầu dùng recording, không hỏi trong onboarding nếu chưa có ngữ cảnh.
+- Cho phép sửa toàn bộ lựa chọn trong Settings và có nút chạy lại placement mà không xóa lịch sử.
+- Theo dõi local các mốc bắt đầu/hoàn tất/bỏ qua để tìm bước gây rớt, không lưu dữ liệu nhận dạng.
+
+**Nghiệm thu:** người mới đi tới bài học đầu tiên; người có nền tảng được xếp đúng chặng; force-close ở mỗi bước có thể resume; hoàn tất rồi không tự hiện lại onboarding.
+
+#### 6. Search và trang chi tiết Grammar/Kanji
+
+**Phạm vi:** tra cứu offline nhanh và liên kết chéo giữa kết quả, bài học, ghi chú, favorite và SRS.
+
+- Chuẩn hóa trường tìm kiếm cho kanji, kana, romaji tùy chọn, nghĩa tiếng Việt, mẫu ngữ pháp, alias và tag.
+- Dùng SQLite FTS nếu driver/runtime đã xác nhận hỗ trợ; nếu chưa, dùng bảng search index đã normalize và `LIKE` có index cho MVP.
+- Thêm debounce, ranking kết quả chính xác/prefix/substring và bộ lọc level, loại, đã học, favorite.
+- Trang Grammar detail hiển thị cấu trúc, ý nghĩa, sắc thái, cách nối, ví dụ, mẫu dễ nhầm, note và bài liên quan.
+- Trang Kanji detail hiển thị nghĩa, On/Kun, bộ/thành phần, số nét, từ ghép, ví dụ, chữ dễ nhầm, mnemonic và tiến độ SRS.
+- Deep-link từ lesson, search, diary và review; trạng thái empty/no-result có gợi ý sửa truy vấn.
+- Benchmark với bộ seed mục tiêu và test tiếng Nhật không khoảng trắng, kana/kanji, dấu tiếng Việt.
+
+**Nghiệm thu:** kết quả đúng và phản hồi nhanh với dữ liệu mục tiêu; detail mở được hoàn toàn offline; favorite/note/SRS cập nhật nhất quán ở mọi điểm vào.
+
+#### 7. Backup và restore
+
+**Phạm vi:** xuất/khôi phục dữ liệu cá nhân có version; không đưa Gemini API key vào backup.
+
+- Định nghĩa manifest gồm `formatVersion`, `schemaVersion`, app version, ngày tạo, checksum và thống kê bản ghi/file.
+- Backup database người dùng cùng note, progress, SRS, diary, settings và tùy chọn kèm recording; loại trừ cache, content có thể seed lại và secret trong SecureStore.
+- Ghi snapshot nhất quán sau khi khóa/flush transaction; đóng gói vào một file và chia sẻ qua system share sheet.
+- Validate extension, kích thước, checksum, schema và từng payload trước khi chạm database hiện tại.
+- Restore theo quy trình: preview → tạo safety backup → import vào database tạm → migrate → kiểm tra → atomic swap → restart store.
+- Nếu restore lỗi, giữ nguyên dữ liệu hiện tại và cung cấp thông báo có thể hành động; hỗ trợ chế độ thay thế toàn bộ trước, merge để phiên bản sau.
+- Test round-trip, backup cũ, file hỏng, thiếu recording và hết dung lượng.
+
+**Nghiệm thu:** backup → xóa dữ liệu thử nghiệm → restore trả lại đúng progress/SRS/diary; file sai không làm thay đổi database; key Gemini không xuất hiện trong gói.
+
+#### 8. One Sentence Diary, Grammar Detective và Kanji Garden
+
+Ba module dùng chung entity/content hiện có, tránh tạo một hệ thống tiến độ riêng.
+
+**One Sentence Diary**
+
+- CRUD một hoặc nhiều câu theo ngày, mood/tag tùy chọn, bản sửa và liên kết grammar/kanji.
+- Cho tạo thẻ cloze hoặc gửi đúng câu được chọn tới Gemini sau consent; phiên bản offline vẫn tự lưu và tra liên kết thủ công.
+- Calendar/streak của Diary tách khỏi streak học để không tạo áp lực sai lệch.
+
+**Grammar Detective**
+
+- Scenario lấy từ content seed gồm đoạn hội thoại, grammar mục tiêu, distractor, hint và lời giải sắc thái.
+- Engine theo ba bước: đánh dấu mẫu → chọn ý nghĩa/sắc thái → giải thích hoặc chọn câu thay thế.
+- Ghi attempt và mastery; câu sai tạo review item hoặc lesson remedial, không trực tiếp sửa lịch card hiện có hai lần.
+
+**Kanji Garden**
+
+- Mỗi cây ánh xạ tới một kanji; stage được tính từ mastery/SRS hiện tại thay vì lưu điểm game không kiểm chứng.
+- Quy tắc tăng trưởng deterministic, ví dụ `seed -> sprout -> young -> mature -> bloom`; sai bài chỉ làm chậm tăng trưởng, không làm cây chết.
+- Hỗ trợ lọc theo level/bộ thủ, chạm cây mở Kanji detail và chế độ giảm chuyển động cho accessibility.
+
+**Nghiệm thu:** cả ba module hoạt động offline; liên kết mở đúng Grammar/Kanji detail; dữ liệu xuất hiện trong backup; Garden tái tạo cùng trạng thái từ dữ liệu SRS và không làm sai lịch ôn.
+
+### Thứ tự bàn giao đề xuất
+
+1. Hoàn tất SQLite/persistence và bộ migration test.
+2. Hoàn tất lesson engine động với một unit N5 làm vertical slice.
+3. Gắn SRS thật vào kết quả lesson để khép kín vòng `học -> ôn -> cập nhật tiến độ`.
+4. Hoàn tất onboarding, sau đó search và hai trang detail để tạo luồng người dùng đầu-cuối.
+5. Thêm audio/recording và kiểm thử lifecycle trên thiết bị thật.
+6. Khóa schema backup, làm backup/restore và fixture tương thích ngược.
+7. Xây Diary, Detective, Kanji Garden trên các API/repository đã ổn định.
+
+Mỗi mục chỉ chuyển sang `Done` khi có migration/fixture cần thiết, unit hoặc integration test cho logic chính, E2E cho happy path, trạng thái offline/error và cập nhật tài liệu schema/content tương ứng.
+
 ## 13. Chiến lược nội dung
 
 - Nội dung chuẩn nên nằm trong file seed có version và nguồn rõ ràng.
@@ -903,6 +1064,38 @@ Mục tiêu sản phẩm nên ưu tiên **khả năng nhớ và sử dụng**, k
 - [Prisma ORM hiện tại và trạng thái SQLite](https://www.prisma.io/docs/orm)
 - [Google Gemini API — API keys và bảo mật](https://ai.google.dev/gemini-api/docs/api-key)
 - [Google Gemini API — Generate content](https://ai.google.dev/api/generate-content)
+
+## 20. Nhật ký thay đổi triển khai
+
+### 2026-08-31 — Tích hợp tab Vocabulary JLPT
+
+**Đã hoàn thành**
+
+- Thêm tab `Từ vựng` vào bottom navigation, route tại `app/(tabs)/vocabulary.tsx`.
+- Tích hợp REST API `https://jlpt-vocab-api.vercel.app/api/words` với lọc level, phân trang và tìm theo từ tiếng Nhật.
+- Hỗ trợ chọn đủ năm cấp độ `N5`, `N4`, `N3`, `N2`, `N1`; mỗi bộ học tải tối đa 20 từ.
+- Flashcard ẩn đáp án ban đầu, sau khi lật hiển thị `furigana`, `romaji` và nghĩa tiếng Anh từ API.
+- Thêm ba mức tự chấm `Quên`, `Khó`, `Đã nhớ`; từ được chấm `Quên/Khó` tự đưa vào vòng học lại cho tới khi người dùng đánh dấu đã nhớ.
+- Thêm tìm kiếm, xóa truy vấn, empty state, loading state, timeout, error state và nút thử lại.
+- Tạo `VocabularyStore`, đăng ký trong `RootStore` và cung cấp hook `useVocabularyStore` qua Store Context.
+- Tách API client tại `src/services/vocabulary/jlptVocabApi.ts`; response được validate bằng Zod trước khi đưa vào store.
+- Chống race condition khi người dùng đổi level/tìm kiếm liên tục bằng request ID; response cũ không được ghi đè state mới.
+- Cập nhật kiểu `style` của component dùng chung `Button` và `Card` sang `StyleProp` để hỗ trợ ghép nhiều style đúng type React Native.
+
+**Đã kiểm tra**
+
+- `npm exec tsc -- --noEmit`: đạt, không còn lỗi TypeScript.
+- `expo export --platform android`: bundle Android thành công.
+- Gọi trực tiếp API cho cả N5 → N1: tất cả level đều trả danh sách đúng schema `word`, `meaning`, `furigana`, `romaji`, `level`.
+- `git diff --check`: không có lỗi whitespace; chỉ có cảnh báo chuyển line ending LF/CRLF trên Windows.
+
+**Giới hạn hiện tại và việc tiếp theo**
+
+- API hiện cung cấp nghĩa tiếng Anh; chưa có lớp nghĩa tiếng Việt đã kiểm duyệt.
+- Tiến độ và bộ từ đang nằm trong MobX runtime, chưa tồn tại sau khi đóng app.
+- Chưa cache dữ liệu API vào SQLite nên lần tải bộ từ mới vẫn cần internet.
+- Chưa chuyển kết quả tự chấm thành `SrsCardData` hoặc đưa vào hàng đợi Review chung.
+- Bước tiếp theo: cache từ vựng bằng repository/SQLite, lưu mastery theo khóa `level + word + furigana`, sau đó tạo/upsert thẻ Vocabulary vào SRS và đưa dữ liệu này vào backup/restore.
 
 ---
 

@@ -51,6 +51,15 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="vocabulary"
+        options={{
+          title: 'Từ vựng',
+          tabBarIcon: ({ focused }) => (
+            <Text style={{ fontSize: 20 }}>{focused ? '📗' : '📘'}</Text>
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="notebook"
         options={{
           title: 'Sổ tay',

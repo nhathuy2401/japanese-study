@@ -3,6 +3,7 @@ import { ProgressStore } from './ProgressStore';
 import { ReviewStore } from './ReviewStore';
 import { NotebookStore } from './NotebookStore';
 import { AiStore } from './AiStore';
+import { VocabularyStore } from './VocabularyStore';
 
 export class RootStore {
   settingsStore: SettingsStore;
@@ -10,6 +11,7 @@ export class RootStore {
   reviewStore: ReviewStore;
   notebookStore: NotebookStore;
   aiStore: AiStore;
+  vocabularyStore: VocabularyStore;
 
   constructor() {
     this.settingsStore = new SettingsStore();
@@ -17,6 +19,7 @@ export class RootStore {
     this.reviewStore = new ReviewStore();
     this.notebookStore = new NotebookStore();
     this.aiStore = new AiStore();
+    this.vocabularyStore = new VocabularyStore();
   }
 }
 
