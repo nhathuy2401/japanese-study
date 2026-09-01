@@ -6,15 +6,27 @@ import { N2_GRAMMAR_POINTS } from '../../data/grammar/n2Grammar';
 import { getFirestoreDb, isFirebaseConfigured } from '../firebase/firebaseConfig';
 import { collection, doc, getDocs, getDoc, query, where } from 'firebase/firestore';
 
-const ALL_LOCAL_GRAMMAR: DomainGrammarPoint[] = [
+let ALL_LOCAL_GRAMMAR: DomainGrammarPoint[] = [
   ...N5_GRAMMAR_POINTS,
   ...N4_GRAMMAR_POINTS,
   ...N3_GRAMMAR_POINTS,
   ...N2_GRAMMAR_POINTS,
 ];
 
+try {
+  const generatedGrammar = require('../../data/generated/all_grammar.json');
+  if (Array.isArray(generatedGrammar) && generatedGrammar.length > 0) {
+    const map = new Map<string, DomainGrammarPoint>();
+    ALL_LOCAL_GRAMMAR.forEach((g) => map.set(g.id, g));
+    generatedGrammar.forEach((g: DomainGrammarPoint) => map.set(g.id, g));
+    ALL_LOCAL_GRAMMAR = Array.from(map.values());
+  }
+} catch (e) {
+  // Dùng seed mặc định nếu chưa bundle JSON
+}
+
 export const grammarService = {
-  // Lấy tất cả mẫu ngữ pháp theo Level (Local-First kết hợp Cloud Fallback)
+  // Lấy tất cả mẫu ngữ pháp theo Level (Local-First kết hợp Cloud Firestore)
   async getGrammarByLevel(level: 'n5' | 'n4' | 'n3' | 'n2'): Promise<DomainGrammarPoint[]> {
     const localMatches = ALL_LOCAL_GRAMMAR.filter((g) => g.levelId === level);
 
@@ -26,14 +38,13 @@ export const grammarService = {
 
         if (!snapshot.empty) {
           const cloudPoints = snapshot.docs.map((d) => d.data() as DomainGrammarPoint);
-          // Gộp không trùng lặp
           const map = new Map<string, DomainGrammarPoint>();
           localMatches.forEach((p) => map.set(p.id, p));
           cloudPoints.forEach((p) => map.set(p.id, p));
           return Array.from(map.values());
         }
       } catch (e) {
-        console.warn('[grammarService] Không thể tải từ Firestore, sử dụng local:', e);
+        console.warn('[grammarService] Không thể tải từ Firestore, sử dụng local cache:', e);
       }
     }
 
@@ -64,4 +75,3 @@ export const grammarService = {
     return ALL_LOCAL_GRAMMAR;
   },
 };
-
