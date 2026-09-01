@@ -6,6 +6,8 @@ import { hapticService } from '../services/haptics/hapticService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const THEME_STORAGE_KEY = 'nihongo-local:theme-mode:v1';
+const ROMAJI_STORAGE_KEY = 'nihongo-local:show-romaji:v1';
+const FURIGANA_STORAGE_KEY = 'nihongo-local:furigana-mode:v1';
 
 export class SettingsStore {
   // Reading & Display Preferences
@@ -33,15 +35,26 @@ export class SettingsStore {
 
   async loadSettings() {
     try {
-      const savedTheme = await AsyncStorage.getItem(THEME_STORAGE_KEY);
-      if (savedTheme === 'light' || savedTheme === 'dark') {
-        runInAction(() => {
+      const [savedTheme, savedRomaji, savedFurigana] = await Promise.all([
+        AsyncStorage.getItem(THEME_STORAGE_KEY),
+        AsyncStorage.getItem(ROMAJI_STORAGE_KEY),
+        AsyncStorage.getItem(FURIGANA_STORAGE_KEY),
+      ]);
+
+      runInAction(() => {
+        if (savedTheme === 'light' || savedTheme === 'dark') {
           this.themeMode = savedTheme;
           this.theme = THEMES[savedTheme] || THEMES.dark;
-        });
-      }
+        }
+        if (savedRomaji !== null) {
+          this.showRomaji = savedRomaji === 'true';
+        }
+        if (savedFurigana && ['always', 'tap-to-reveal', 'hidden'].includes(savedFurigana)) {
+          this.furiganaMode = savedFurigana as FuriganaMode;
+        }
+      });
     } catch (e) {
-      console.warn('[SettingsStore] Lỗi đọc themeMode:', e);
+      console.warn('[SettingsStore] Lỗi đọc settings:', e);
     }
 
     const key = await getGeminiApiKey();
@@ -57,11 +70,13 @@ export class SettingsStore {
   setFuriganaMode(mode: FuriganaMode) {
     this.furiganaMode = mode;
     hapticService.light();
+    void AsyncStorage.setItem(FURIGANA_STORAGE_KEY, mode);
   }
 
   toggleRomaji(val?: boolean) {
     this.showRomaji = val !== undefined ? val : !this.showRomaji;
     hapticService.light();
+    void AsyncStorage.setItem(ROMAJI_STORAGE_KEY, String(this.showRomaji));
   }
 
   setThemeMode(mode: ThemeMode) {

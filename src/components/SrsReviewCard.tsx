@@ -2,9 +2,10 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { observer } from 'mobx-react-lite';
 import { SrsCardData, SrsRating } from '../domain/entities/types';
-import { useReviewStore, useAppTheme } from '../stores/StoreContext';
+import { useReviewStore, useSettingsStore, useAppTheme } from '../stores/StoreContext';
 import { colors } from '../theme/colors';
 import { FuriganaText } from './FuriganaText';
+import { toRomaji } from '../utils/romajiHelper';
 
 interface SrsReviewCardProps {
   card: SrsCardData;
@@ -12,6 +13,7 @@ interface SrsReviewCardProps {
 
 export const SrsReviewCard: React.FC<SrsReviewCardProps> = observer(({ card }) => {
   const reviewStore = useReviewStore();
+  const settings = useSettingsStore();
   const theme = useAppTheme();
   const intervals = reviewStore.projectedIntervals;
 
@@ -61,6 +63,11 @@ export const SrsReviewCard: React.FC<SrsReviewCardProps> = observer(({ card }) =
           {card.reading && reviewStore.isFlipped && (
             <Text style={[styles.readingText, { color: theme.accent }]}>[{card.reading}]</Text>
           )}
+          {settings.showRomaji && (
+            <Text style={[styles.romajiPromptText, { color: theme.accent }]}>
+              /{toRomaji(card.reading || card.prompt)}/
+            </Text>
+          )}
         </View>
 
         {/* Answer (Back) - Revealed after tap */}
@@ -77,6 +84,11 @@ export const SrsReviewCard: React.FC<SrsReviewCardProps> = observer(({ card }) =
                   furiganaFontSize={9}
                   style={{ marginBottom: 4 }}
                 />
+                {settings.showRomaji && (
+                  <Text style={[styles.exampleRomajiText, { color: theme.textSecondary }]}>
+                    {toRomaji(card.exampleSentence)}
+                  </Text>
+                )}
               </View>
             )}
           </View>
@@ -193,6 +205,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginTop: 6,
   },
+  romajiPromptText: {
+    fontSize: 15,
+    fontWeight: '700',
+    marginTop: 6,
+    letterSpacing: 0.5,
+  },
   answerArea: {
     width: '100%',
     alignItems: 'center',
@@ -217,6 +235,12 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginTop: 14,
     width: '100%',
+  },
+  exampleRomajiText: {
+    fontSize: 13,
+    fontStyle: 'italic',
+    marginTop: 4,
+    opacity: 0.85,
   },
   tapPrompt: {
     marginTop: 20,

@@ -9,6 +9,7 @@ import { hapticService } from '../services/haptics/hapticService';
 import { PitchVisualizer } from './PitchVisualizer';
 
 import { parseFurigana } from '../utils/furiganaHelper';
+import { toRomaji } from '../utils/romajiHelper';
 
 interface InteractiveSentenceProps {
   tokens?: JapaneseToken[];
@@ -141,8 +142,10 @@ export const InteractiveSentence: React.FC<InteractiveSentenceProps> = observer(
       </View>
 
       {/* Romaji row if enabled */}
-      {settings.showRomaji && romajiSentence && (
-        <Text style={[styles.romajiText, { color: theme.textSecondary }]}>{romajiSentence}</Text>
+      {settings.showRomaji && (
+        <Text style={[styles.romajiText, { color: theme.textSecondary }]}>
+          {romajiSentence || toRomaji(sentence || (tokens ? tokens.map((t) => t.kanji).join('') : ''))}
+        </Text>
       )}
 
       {/* Vietnamese translation */}
