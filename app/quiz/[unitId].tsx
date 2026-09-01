@@ -379,10 +379,10 @@ export default observer(function UnitQuizScreen() {
               isCurrentCorrect ? styles.feedbackCardCorrect : styles.feedbackCardWrong,
             ]}
           >
-            <Text style={styles.feedbackTitle}>
+            <Text style={[styles.feedbackTitle, { color: isCurrentCorrect ? colors.success : colors.danger }]}>
               {isCurrentCorrect ? '🎉 CHÍNH XÁC!' : '❌ CHƯA CHÍNH XÁC!'}
             </Text>
-            <Text style={styles.feedbackExplanation}>{currentQ.explanation}</Text>
+            <Text style={[styles.feedbackExplanation, { color: theme.textPrimary }]}>{currentQ.explanation}</Text>
           </Card>
         )}
       </ScrollView>

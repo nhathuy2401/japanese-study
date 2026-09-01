@@ -47,4 +47,48 @@ describe('QuizService', () => {
     expect(questions[0].options.length).toBe(4);
     expect(questions[0].options.some((o) => o.isCorrect)).toBe(true);
   });
+
+  it('should generate unit quiz questions for Unit 2 without [object Object] and without duplicate options', async () => {
+    const questions = await quizService.generateUnitQuiz('n5-u2');
+    expect(questions.length).toBeGreaterThan(0);
+
+    for (const q of questions) {
+      // 1. Tuyệt đối không được chứa [object Object]
+      expect(q.explanation).not.toContain('[object Object]');
+      expect(q.prompt).not.toContain('[object Object]');
+      if (q.subPrompt) expect(q.subPrompt).not.toContain('[object Object]');
+
+      // 2. Các options trắc nghiệm phải hoàn toàn duy nhất (không trùng lặp text)
+      if (q.options && q.options.length > 0) {
+        const optionTexts = q.options.map((o) => o.text.trim());
+        const uniqueTexts = new Set(optionTexts);
+        expect(uniqueTexts.size).toBe(optionTexts.length);
+
+        // 3. Phải có đúng 1 đáp án đúng
+        const correctOptions = q.options.filter((o) => o.isCorrect);
+        expect(correctOptions.length).toBe(1);
+
+        // 4. Không được chứa placeholder "Mẫu ngữ pháp JLPT chuẩn"
+        for (const opt of q.options) {
+          expect(opt.text).not.toBe('Mẫu ngữ pháp JLPT chuẩn');
+        }
+      }
+    }
+  });
+
+  it('should verify all units across N5 and N4 have clean explanations and unique options', async () => {
+    const unitIds = ['n5-u1', 'n5-u2', 'n5-u3', 'n4-u1'];
+    for (const unitId of unitIds) {
+      const questions = await quizService.generateUnitQuiz(unitId);
+      for (const q of questions) {
+        expect(q.explanation).not.toContain('[object Object]');
+        if (q.options && q.options.length > 0) {
+          const texts = q.options.map((o) => o.text.trim());
+          const uniqueTexts = new Set(texts);
+          expect(uniqueTexts.size).toBe(texts.length);
+        }
+      }
+    }
+  });
 });
+

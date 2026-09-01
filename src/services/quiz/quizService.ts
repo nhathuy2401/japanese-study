@@ -89,30 +89,85 @@ export const quizService = {
       grammarList.push(...fallbackList.slice(0, 5));
     }
 
+    // Helper định dạng cấu trúc ngữ pháp không bị [object Object]
+    const formatFormationText = (formation: any): string => {
+      if (!formation) return 'Xem chi tiết trong bài học';
+      if (typeof formation === 'string') return formation.trim();
+      if (Array.isArray(formation) && formation.length > 0) {
+        const parts = formation
+          .map((f: any) => {
+            if (!f) return '';
+            if (typeof f === 'string') return f.trim();
+            if (f.component && f.explanationVi) {
+              return `${f.component} (${f.explanationVi})`;
+            }
+            return (f.component || f.explanationVi || '').trim();
+          })
+          .filter(Boolean);
+        return parts.length > 0 ? parts.join(' | ') : 'Xem chi tiết trong bài học';
+      }
+      return 'Xem chi tiết trong bài học';
+    };
+
+    // Kho phương án sai chuẩn tiếng Việt phong phú để không bao giờ bị trùng lặp
+    const VIETNAMESE_DISTRACTORS = [
+      'Diễn tả hành động đang diễn ra tại thời điểm nói',
+      'Lời khuyên ai đó nên hoặc không nên làm gì',
+      'Biểu đạt khả năng hoặc năng lực có thể làm được',
+      'Hành động xảy ra trước một mốc thời gian xác định',
+      'Diễn tả sự hối tiếc vì một việc lỡ xảy ra ngoài ý muốn',
+      'Hành động vừa mới hoàn thành xong tức thì',
+      'Diễn tả điều kiện giả định nếu xảy ra thì...',
+      'Diễn tả mục đích di chuyển để làm một việc gì đó',
+      'Diễn tả việc thử làm điều gì đó xem kết quả ra sao',
+      'Diễn tả hai hành động diễn ra song song cùng lúc',
+      'Sự biến đổi trạng thái trở nên hoặc làm cho trở nên...',
+      'Diễn tả sự bắt buộc phải thực hiện hành động',
+      'Cho phép hoặc xin phép làm một việc gì đó',
+      'Quy tắc cấm đoán không được phép làm gì',
+      'So sánh hơn kém hoặc lựa chọn giữa các đối tượng',
+      'Diễn tả thói quen hoặc trạng thái lặp đi lặp lại',
+      'Diễn tả dự định hoặc kế hoạch chắc chắn trong tương lai',
+      'Nghe nói lại thông tin từ một nguồn khác',
+      'Phán đoán sự việc dựa trên quan sát trực giác',
+      'Nhờ vả ai đó thực hiện hành động giúp mình',
+    ];
+
     // 2. Sinh Câu hỏi Dạng 1: Trắc nghiệm ý nghĩa mẫu ngữ pháp
     grammarList.slice(0, 2).forEach((g, idx) => {
-      const otherMeanings = grammarList
-        .filter((other) => other.id !== g.id)
-        .map((other) => other.meaningVi);
+      const correctMeaning = (g.meaningVi || '').trim();
+      const seenOptions = new Set<string>([correctMeaning]);
 
-      const wrongOptions = shuffle(otherMeanings).slice(0, 3);
-      // Bổ sung các phương án sai nếu thiếu
-      const defaultDistractors = [
-        'Hành động đang diễn ra tại thời điểm nói',
-        'Lời khuyên nên hoặc không nên làm gì',
-        'Biểu đạt khả năng có thể làm được',
-        'Hành động xảy ra trước một mốc thời gian',
-      ];
-      while (wrongOptions.length < 3) {
-        wrongOptions.push(defaultDistractors[wrongOptions.length]);
-      }
+      // Lấy các phương án sai từ các ngữ pháp khác trong bài
+      const otherMeanings = grammarList
+        .filter((other) => other.id !== g.id && other.meaningVi)
+        .map((other) => other.meaningVi.trim())
+        .filter((m) => m.length > 0 && !seenOptions.has(m));
+
+      const wrongOptions: string[] = [];
+      shuffle(otherMeanings).forEach((m) => {
+        if (wrongOptions.length < 3 && !seenOptions.has(m)) {
+          seenOptions.add(m);
+          wrongOptions.push(m);
+        }
+      });
+
+      // Bổ sung phương án sai từ kho dự phòng nếu chưa đủ 3
+      shuffle(VIETNAMESE_DISTRACTORS).forEach((distractor) => {
+        if (wrongOptions.length < 3 && !seenOptions.has(distractor)) {
+          seenOptions.add(distractor);
+          wrongOptions.push(distractor);
+        }
+      });
 
       const options: QuizOption[] = shuffle([
-        { id: 'opt-corr', text: g.meaningVi, isCorrect: true },
-        { id: 'opt-w1', text: wrongOptions[0], isCorrect: false },
-        { id: 'opt-w2', text: wrongOptions[1], isCorrect: false },
-        { id: 'opt-w3', text: wrongOptions[2], isCorrect: false },
+        { id: 'opt-corr', text: correctMeaning, isCorrect: true },
+        { id: 'opt-w1', text: wrongOptions[0] || 'Diễn tả thói quen lặp lại', isCorrect: false },
+        { id: 'opt-w2', text: wrongOptions[1] || 'Khuyên bảo ai đó nên làm gì', isCorrect: false },
+        { id: 'opt-w3', text: wrongOptions[2] || 'Diễn tả khả năng thực hiện', isCorrect: false },
       ]);
+
+      const formationStr = formatFormationText(g.formation);
 
       questions.push({
         id: `q-mc-${idx + 1}`,
@@ -120,8 +175,8 @@ export const quizService = {
         prompt: `Mẫu ngữ pháp sau có ý nghĩa là gì?`,
         subPrompt: g.pattern,
         options: options,
-        correctAnswer: g.meaningVi,
-        explanation: `Mẫu ngữ pháp ${g.pattern}: ${g.meaningVi}. Cấu trúc: ${g.formation || 'Xem cấu trúc trong bài'}.`,
+        correctAnswer: correctMeaning,
+        explanation: `Mẫu ngữ pháp ${g.pattern}: ${correctMeaning}. Cấu trúc: ${formationStr}.`,
       });
     });
 
@@ -130,20 +185,21 @@ export const quizService = {
       if (questions.length >= 5) return;
       if (g.examples && g.examples.length > 0) {
         const ex = g.examples[0];
-        const cleanPattern = g.pattern.replace(/^[〜~]/, '');
+        const cleanPattern = g.pattern.replace(/^[〜~]/, '').trim();
 
         if (cleanPattern && ex.japanese.includes(cleanPattern)) {
           const blankSentence = ex.japanese.replace(cleanPattern, '【 ___ 】');
-          const distractorPatterns = ['〜てもいい', '〜てはいけません', '〜から', '〜ので', '〜まえに']
-            .map((p) => p.replace(/^[〜~]/, ''))
-            .filter((p) => p !== cleanPattern)
-            .slice(0, 3);
+          const distractorPool = ['〜てもいい', '〜てはいけません', '〜から', '〜ので', '〜まえに', '〜あとで', '〜ながら', '〜たい', '〜ている', '〜ほうがいい']
+            .map((p) => p.replace(/^[〜~]/, '').trim())
+            .filter((p) => p !== cleanPattern && p.length > 0);
+
+          const uniqueDistractors = shuffle(Array.from(new Set(distractorPool))).slice(0, 3);
 
           const options: QuizOption[] = shuffle([
             { id: 'opt-c', text: cleanPattern, isCorrect: true },
-            { id: 'opt-w1', text: distractorPatterns[0], isCorrect: false },
-            { id: 'opt-w2', text: distractorPatterns[1], isCorrect: false },
-            { id: 'opt-w3', text: distractorPatterns[2], isCorrect: false },
+            { id: 'opt-w1', text: uniqueDistractors[0] || 'から', isCorrect: false },
+            { id: 'opt-w2', text: uniqueDistractors[1] || 'ので', isCorrect: false },
+            { id: 'opt-w3', text: uniqueDistractors[2] || 'まえに', isCorrect: false },
           ]);
 
           questions.push({
@@ -163,17 +219,18 @@ export const quizService = {
     // 4. Sinh Câu hỏi Dạng 3: Cách đọc Furigana của chữ Kanji trong Unit
     kanjiList.slice(0, 2).forEach((k, idx) => {
       const reading = (k.kunyomi && k.kunyomi[0]) || (k.onyomi && k.onyomi[0]) || 'ひと';
-      const cleanReading = reading.replace(/[.\-]/g, '');
+      const cleanReading = reading.replace(/[.\-]/g, '').trim();
 
-      const distractorReadings = ['み', 'た', 'い', 'の', 'か', 'き', 'はな', 'やま']
-        .filter((r) => r !== cleanReading)
-        .slice(0, 3);
+      const distractorPool = ['み', 'た', 'い', 'の', 'か', 'き', 'はな', 'やま', 'みず', 'て', 'め', 'かわ', 'もり', 'そら']
+        .filter((r) => r !== cleanReading);
+
+      const uniqueDistractors = shuffle(Array.from(new Set(distractorPool))).slice(0, 3);
 
       const options: QuizOption[] = shuffle([
         { id: 'opt-corr', text: cleanReading, isCorrect: true },
-        { id: 'opt-w1', text: distractorReadings[0], isCorrect: false },
-        { id: 'opt-w2', text: distractorReadings[1], isCorrect: false },
-        { id: 'opt-w3', text: distractorReadings[2], isCorrect: false },
+        { id: 'opt-w1', text: uniqueDistractors[0] || 'み', isCorrect: false },
+        { id: 'opt-w2', text: uniqueDistractors[1] || 'た', isCorrect: false },
+        { id: 'opt-w3', text: uniqueDistractors[2] || 'やま', isCorrect: false },
       ]);
 
       questions.push({
@@ -191,11 +248,13 @@ export const quizService = {
     const exWithTokens = grammarList.find((g) => g.examples && g.examples.length > 0);
     if (exWithTokens && exWithTokens.examples[0]) {
       const ex = exWithTokens.examples[0];
-      const tokens = ex.tokens && ex.tokens.length >= 3
-        ? ex.tokens.map((t: any) => t.kanji.trim()).filter(Boolean)
+      const rawTokens = ex.tokens && ex.tokens.length >= 3
+        ? ex.tokens.map((t: any) => (t.kanji || '').trim()).filter(Boolean)
         : ex.japanese.split(/([、。 ]+)/).map((s: string) => s.trim()).filter(Boolean);
 
-      if (tokens.length >= 3 && tokens.length <= 6) {
+      const tokens = rawTokens.filter((t: string) => t !== '。' && t !== '、' && t.length > 0);
+
+      if (tokens.length >= 3 && tokens.length <= 7) {
         questions.push({
           id: `q-scramble-1`,
           type: 'sentence-scramble',
