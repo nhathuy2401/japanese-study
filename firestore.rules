@@ -2,7 +2,7 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // 1. Kho dữ liệu giáo trình mở (Master Data): Cho phép người học đọc công khai
+    // 1. Master collections: Cho phép người học đọc công khai
     match /grammar_points/{grammarId} {
       allow read: if true;
       allow write: if false;
@@ -24,4 +24,3 @@ service cloud.firestore {
     }
   }
 }
-

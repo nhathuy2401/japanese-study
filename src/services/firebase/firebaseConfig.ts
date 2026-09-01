@@ -10,9 +10,17 @@ export interface FirebaseAppConfig {
   appId: string;
 }
 
+let dynamicFirebaseApiKey: string = '';
+
+export function setDynamicFirebaseApiKey(key: string) {
+  dynamicFirebaseApiKey = key;
+  firebaseAppInstance = null;
+  firestoreInstance = null;
+}
+
 export function getFirebaseConfig(): FirebaseAppConfig {
   return {
-    apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY || 'AIzaSyC0iXxfkb-Y-_1B906Hq-aueRP2qaVRHUo',
+    apiKey: dynamicFirebaseApiKey || process.env.EXPO_PUBLIC_FIREBASE_API_KEY || '',
     authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN || 'study-2cf98.firebaseapp.com',
     projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID || 'study-2cf98',
     storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET || 'study-2cf98.firebasestorage.app',
@@ -23,7 +31,7 @@ export function getFirebaseConfig(): FirebaseAppConfig {
 
 export function isFirebaseConfigured(): boolean {
   const config = getFirebaseConfig();
-  return !!config.projectId && config.projectId === 'study-2cf98';
+  return !!config.projectId && !!config.apiKey;
 }
 
 let firebaseAppInstance: FirebaseApp | null = null;

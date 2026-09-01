@@ -1,10 +1,12 @@
+/**
+ * Firestore Database Seeder Script (Master Datasets)
+ */
+
 const { initializeApp } = require('firebase/app');
 const { getFirestore, doc, setDoc } = require('firebase/firestore');
-const babel = require('@babel/core');
-const fs = require('fs');
 
 const firebaseConfig = {
-  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY || 'AIzaSyC0iXxfkb-Y-_1B906Hq-aueRP2qaVRHUo',
+  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY || process.env.FIREBASE_API_KEY || '',
   authDomain: 'study-2cf98.firebaseapp.com',
   projectId: 'study-2cf98',
   storageBucket: 'study-2cf98.firebasestorage.app',
@@ -15,73 +17,75 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-function loadModule(filePath) {
-  const code = fs.readFileSync(filePath, 'utf8');
-  const transformed = babel.transformSync(code, {
-    configFile: './babel.config.js',
-    filename: filePath,
-  }).code;
-  const m = { exports: {} };
-  const fn = new Function('module', 'exports', 'require', transformed);
-  fn(m, m.exports, require);
-  return m.exports;
-}
+const { N5_GRAMMAR_POINTS } = require('../src/data/grammar/n5Grammar');
+const { N4_GRAMMAR_POINTS } = require('../src/data/grammar/n4Grammar');
+const { N3_GRAMMAR_POINTS } = require('../src/data/grammar/n3Grammar');
+const { N2_GRAMMAR_POINTS } = require('../src/data/grammar/n2Grammar');
 
-const n5Grammar = loadModule('src/data/grammar/n5Grammar.ts').N5_GRAMMAR_POINTS;
-const n4Grammar = loadModule('src/data/grammar/n4Grammar.ts').N4_GRAMMAR_POINTS;
-const n3Grammar = loadModule('src/data/grammar/n3Grammar.ts').N3_GRAMMAR_POINTS;
-const n2Grammar = loadModule('src/data/grammar/n2Grammar.ts').N2_GRAMMAR_POINTS;
+const { N5_KANJI_LIST } = require('../src/data/kanji/n5Kanji');
+const { N4_KANJI_LIST } = require('../src/data/kanji/n4Kanji');
+const { N3_KANJI_LIST } = require('../src/data/kanji/n3Kanji');
+const { N2_KANJI_LIST } = require('../src/data/kanji/n2Kanji');
 
-const n5Kanji = loadModule('src/data/kanji/n5Kanji.ts').N5_KANJI_LIST;
-const n4Kanji = loadModule('src/data/kanji/n4Kanji.ts').N4_KANJI_LIST;
-const n3Kanji = loadModule('src/data/kanji/n3Kanji.ts').N3_KANJI_LIST;
-const n2Kanji = loadModule('src/data/kanji/n2Kanji.ts').N2_KANJI_LIST;
+const {
+  N5_CURRICULUM,
+  N4_CURRICULUM,
+  N3_CURRICULUM,
+  N2_CURRICULUM,
+} = require('../src/data/curriculum/curriculumData');
 
-const curriculum = loadModule('src/data/curriculum/curriculumData.ts').CURRICULUM_UNITS;
-
-async function seedFirestore() {
+async function seedDatabase() {
   console.log('🚀 Bắt đầu nạp dữ liệu lên Firebase Firestore (study-2cf98)...');
 
-  const allGrammar = [...n5Grammar, ...n4Grammar, ...n3Grammar, ...n2Grammar];
+  const allGrammar = [
+    ...N5_GRAMMAR_POINTS,
+    ...N4_GRAMMAR_POINTS,
+    ...N3_GRAMMAR_POINTS,
+    ...N2_GRAMMAR_POINTS,
+  ];
+
   console.log(`📦 Đang nạp ${allGrammar.length} mẫu ngữ pháp vào collection grammar_points...`);
-  for (const g of allGrammar) {
-    await setDoc(doc(db, 'grammar_points', g.id), {
-      ...g,
-      level: g.levelId,
-      updatedAt: new Date().toISOString(),
-    });
+  for (const item of allGrammar) {
+    const docRef = doc(db, 'grammar_points', item.id);
+    await setDoc(docRef, item, { merge: true });
     process.stdout.write('.');
   }
   console.log('\n✅ Hoàn thành nạp grammar_points!');
 
-  const allKanji = [...n5Kanji, ...n4Kanji, ...n3Kanji, ...n2Kanji];
+  const allKanji = [
+    ...N5_KANJI_LIST,
+    ...N4_KANJI_LIST,
+    ...N3_KANJI_LIST,
+    ...N2_KANJI_LIST,
+  ];
+
   console.log(`📦 Đang nạp ${allKanji.length} chữ Kanji vào collection kanji_dict...`);
-  for (const k of allKanji) {
-    await setDoc(doc(db, 'kanji_dict', k.character), {
-      ...k,
-      level: k.levelId,
-      updatedAt: new Date().toISOString(),
-    });
+  for (const item of allKanji) {
+    const docRef = doc(db, 'kanji_dict', item.character);
+    await setDoc(docRef, item, { merge: true });
     process.stdout.write('.');
   }
   console.log('\n✅ Hoàn thành nạp kanji_dict!');
 
   console.log('📦 Đang nạp dữ liệu lộ trình học vào collection curriculum...');
-  for (const [level, units] of Object.entries(curriculum)) {
-    await setDoc(doc(db, 'curriculum', level), {
-      level,
-      units,
-      updatedAt: new Date().toISOString(),
-    });
-    console.log(`  - Đã nạp lộ trình cho level ${level.toUpperCase()} (${units.length} units)`);
+  const curriculums = [
+    { level: 'n5', data: N5_CURRICULUM },
+    { level: 'n4', data: N4_CURRICULUM },
+    { level: 'n3', data: N3_CURRICULUM },
+    { level: 'n2', data: N2_CURRICULUM },
+  ];
+
+  for (const curr of curriculums) {
+    const docRef = doc(db, 'curriculum', curr.level);
+    await setDoc(docRef, curr.data, { merge: true });
+    console.log(`  - Đã nạp lộ trình cho level ${curr.level.toUpperCase()} (${curr.data.units.length} units)`);
   }
 
   console.log('🎉 TẤT CẢ DỮ LIỆU ĐÃ ĐƯỢC NẠP LÊN FIREBASE FIRESTORE THÀNH CÔNG!');
   process.exit(0);
 }
 
-seedFirestore().catch((err) => {
-  console.error('❌ Lỗi khi nạp dữ liệu lên Firestore:', err);
+seedDatabase().catch((err) => {
+  console.error('❌ Lỗi khi nạp dữ liệu Firebase:', err);
   process.exit(1);
 });
-
