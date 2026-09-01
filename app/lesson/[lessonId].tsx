@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { observer } from 'mobx-react-lite';
@@ -12,14 +12,23 @@ import { Button } from '../../src/components/Button';
 import { Card } from '../../src/components/Card';
 import { hapticService } from '../../src/services/haptics/hapticService';
 import { useProgressStore } from '../../src/stores/StoreContext';
+import { curriculumService } from '../../src/services/curriculum/curriculumService';
+import { grammarService } from '../../src/services/grammar/grammarService';
+import { kanjiService } from '../../src/services/kanji/kanjiService';
+import { DomainGrammarPoint, DomainKanji } from '../../src/domain/entities/types';
 
 export default observer(function LessonRunnerScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
+  const lessonId = String(params.lessonId || 'lesson-1');
   const progressStore = useProgressStore();
 
   const [currentStep, setCurrentStep] = useState<number>(1);
   const totalSteps = 4;
+
+  const [grammar, setGrammar] = useState<DomainGrammarPoint>(SEED_GRAMMAR_POINTS[0]);
+  const [kanji, setKanji] = useState<DomainKanji>(SEED_KANJI[0]);
+  const [isLoadingData, setIsLoadingData] = useState<boolean>(true);
 
   // Quiz State for Step 3: Interactive Sentence Builder
   const targetWords = ['わたしは', 'ジュース', 'を', 'のみます'];
@@ -35,8 +44,30 @@ export default observer(function LessonRunnerScreen() {
   const [isAnswerChecked, setIsAnswerChecked] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
 
-  const grammar = SEED_GRAMMAR_POINTS[0];
-  const kanji = SEED_KANJI[0];
+  useEffect(() => {
+    let isMounted = true;
+    setIsLoadingData(true);
+
+    const lesson = curriculumService.findLessonById(lessonId);
+    if (lesson) {
+      Promise.all([
+        lesson.grammarPointId ? grammarService.getGrammarPointById(lesson.grammarPointId) : null,
+        lesson.kanjiId ? kanjiService.getKanjiById(lesson.kanjiId) : null,
+      ]).then(([loadedGrammar, loadedKanji]) => {
+        if (isMounted) {
+          if (loadedGrammar) setGrammar(loadedGrammar);
+          if (loadedKanji) setKanji(loadedKanji);
+          setIsLoadingData(false);
+        }
+      });
+    } else {
+      setIsLoadingData(false);
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, [lessonId]);
 
   const handleWordSelect = (word: string, index: number) => {
     if (isAnswerChecked) return;
@@ -48,7 +79,7 @@ export default observer(function LessonRunnerScreen() {
   const handleRemoveWord = (word: string, index: number) => {
     if (isAnswerChecked) return;
     hapticService.light();
-    setSelectedWords((prev) => prev.filter((_, idx) => idx !== index));
+    setSelectedWords((prev) => [...prev, word]);
     setBankWords((prev) => [...prev, word]);
   };
 
@@ -80,6 +111,14 @@ export default observer(function LessonRunnerScreen() {
       ]);
     }
   };
+
+  if (isLoadingData) {
+    return (
+      <SafeAreaView style={[styles.safeArea, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={colors.accent} />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -124,7 +163,7 @@ export default observer(function LessonRunnerScreen() {
                 key={idx}
                 tokens={ex.tokens || []}
                 meaningVi={ex.meaningVi}
-                romajiSentence="Koko de shashin o totte wa ikemasen."
+                romajiSentence={ex.reading}
               />
             ))}
           </View>
@@ -386,4 +425,3 @@ const styles = StyleSheet.create({
     width: '100%',
   },
 });
-

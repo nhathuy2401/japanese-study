@@ -1,0 +1,87 @@
+import { DomainKanji } from '../../domain/entities/types';
+
+export const N5_KANJI_LIST: DomainKanji[] = [
+  {
+    id: 'k-n5-1',
+    character: '日',
+    levelId: 'n5',
+    meaningsVi: ['Ngày', 'Mặt trời', 'Nhật Bản'],
+    onyomi: ['NICHI (にち)', 'JITSU (じつ)'],
+    kunyomi: ['hi (ひ)', '-bi (-び)', 'ka (か)'],
+    strokeCount: 4,
+    radicals: [{ symbol: '日', name: 'Nhật', meaningVi: 'Mặt trời / Ngày' }],
+    mnemonic: 'Hình dáng mặt trời tròn với một vệt sáng ở giữa.',
+    vocabCompounds: [
+      { expression: '日本', reading: 'にほん', meaningVi: 'Nhật Bản' },
+      { expression: '毎日', reading: 'まいにち', meaningVi: 'Mỗi ngày' },
+      { expression: '日曜日', reading: 'にちようび', meaningVi: 'Chủ nhật' },
+    ],
+  },
+  {
+    id: 'k-n5-2',
+    character: '月',
+    levelId: 'n5',
+    meaningsVi: ['Mặt trăng', 'Tháng'],
+    onyomi: ['GETSU (げつ)', 'GATSU (がつ)'],
+    kunyomi: ['tsuki (つき)'],
+    strokeCount: 4,
+    radicals: [{ symbol: '月', name: 'Nguyệt', meaningVi: 'Mặt trăng' }],
+    mnemonic: 'Hình dáng vầng trăng khuyết lấp lánh trên bầu trời đêm.',
+    vocabCompounds: [
+      { expression: '今月', reading: 'こんげつ', meaningVi: 'Tháng này' },
+      { expression: '月曜日', reading: 'げつようび', meaningVi: 'Thứ hai' },
+      { expression: '一月', reading: 'いちがつ', meaningVi: 'Tháng một' },
+    ],
+  },
+  {
+    id: 'k-n5-3',
+    character: '木',
+    levelId: 'n5',
+    meaningsVi: ['Cây cối', 'Gỗ'],
+    onyomi: ['MOKU (もく)', 'BOKU (ぼく)'],
+    kunyomi: ['ki (き)'],
+    strokeCount: 4,
+    radicals: [{ symbol: '木', name: 'Mộc', meaningVi: 'Cây cối' }],
+    mnemonic: 'Hình dáng một cái cây với thân thẳng, cành lá và rễ cắm sâu vào đất.',
+    vocabCompounds: [
+      { expression: '木曜日', reading: 'もくようび', meaningVi: 'Thứ năm' },
+      { expression: '木', reading: 'き', meaningVi: 'Cây' },
+    ],
+  },
+  {
+    id: 'k-n5-4',
+    character: '休',
+    levelId: 'n5',
+    meaningsVi: ['Nghỉ ngơi', 'Nghỉ học / Hưu'],
+    onyomi: ['KYŪ (きゅう)'],
+    kunyomi: ['yasu-mu (休む)', 'yasu-mi (休み)'],
+    strokeCount: 6,
+    radicals: [
+      { symbol: '亻', name: 'Nhân đứng', meaningVi: 'Người' },
+      { symbol: '木', name: 'Mộc', meaningVi: 'Cây cối' },
+    ],
+    mnemonic: 'Một NGƯỜI (亻) tựa lưng vào gốc CÂY (木) để NGHỈ NGƠI (休).',
+    vocabCompounds: [
+      { expression: '休み', reading: 'やすみ', meaningVi: 'Nghỉ phép / Nghỉ giải lao' },
+      { expression: '夏休み', reading: 'なつやすみ', meaningVi: 'Kỳ nghỉ hè' },
+      { expression: '休日', reading: 'きゅうじつ', meaningVi: 'Ngày nghỉ' },
+    ],
+  },
+  {
+    id: 'k-n5-5',
+    character: '学',
+    levelId: 'n5',
+    meaningsVi: ['Học tập', 'Trường học'],
+    onyomi: ['GAKU (がく)'],
+    kunyomi: ['mana-bu (学ぶ)'],
+    strokeCount: 8,
+    radicals: [{ symbol: '子', name: 'Tử', meaningVi: 'Đứa trẻ' }],
+    mnemonic: 'Đứa trẻ (子) đội mũ học sinh ngồi dưới mái nhà chăm chỉ học bài.',
+    vocabCompounds: [
+      { expression: '学生', reading: 'がくせい', meaningVi: 'Học sinh, sinh viên' },
+      { expression: '学校', reading: 'がっこう', meaningVi: 'Trường học' },
+      { expression: '大学', reading: 'だいがく', meaningVi: 'Đại học' },
+    ],
+  },
+];
+

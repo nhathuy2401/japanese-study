@@ -1,18 +1,43 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { observer } from 'mobx-react-lite';
 import { colors } from '../../src/theme/colors';
-import { SEED_LEVELS, SEED_UNITS } from '../../src/db/seed/n5Data';
+import { SEED_LEVELS } from '../../src/db/seed/n5Data';
 import { Card } from '../../src/components/Card';
 import { Badge } from '../../src/components/Badge';
-import { Button } from '../../src/components/Button';
 import { hapticService } from '../../src/services/haptics/hapticService';
+import { curriculumService } from '../../src/services/curriculum/curriculumService';
+import { UnitData } from '../../src/data/curriculum/curriculumData';
 
 export default observer(function LearnScreen() {
   const router = useRouter();
-  const [selectedLevelId, setSelectedLevelId] = useState<string>('n5');
+  const [selectedLevelId, setSelectedLevelId] = useState<'n5' | 'n4' | 'n3' | 'n2'>('n5');
+  const [units, setUnits] = useState<UnitData[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    setIsLoading(true);
+
+    curriculumService
+      .getUnitsByLevel(selectedLevelId)
+      .then((loadedUnits) => {
+        if (isMounted) {
+          setUnits(loadedUnits);
+          setIsLoading(false);
+        }
+      })
+      .catch((err) => {
+        console.warn('Lỗi tải units cho level:', err);
+        if (isMounted) setIsLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedLevelId]);
 
   const handleStartLesson = (lessonId: string) => {
     hapticService.light();
@@ -21,7 +46,7 @@ export default observer(function LearnScreen() {
 
   const handleSkipLevel = () => {
     hapticService.medium();
-    alert('Tính năng Mở khóa vượt cấp (Skip Checkpoint): Bạn có thể làm bài kiểm tra 15 câu để mở khóa thẳng N4/N3!');
+    alert('Tính năng Mở khóa vượt cấp (Skip Checkpoint): Bạn có thể làm bài kiểm tra 15 câu để mở khóa thẳng N4/N3/N2!');
   };
 
   return (
@@ -29,13 +54,13 @@ export default observer(function LearnScreen() {
       {/* Top Level Selector Chips */}
       <View style={styles.levelSelector}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.levelScroll}>
-          {SEED_LEVELS.map((lvl) => (
+          {SEED_LEVELS.filter((lvl) => ['n5', 'n4', 'n3', 'n2'].includes(lvl.id)).map((lvl) => (
             <TouchableOpacity
               key={lvl.id}
               activeOpacity={0.7}
               onPress={() => {
                 hapticService.light();
-                setSelectedLevelId(lvl.id);
+                setSelectedLevelId(lvl.id as any);
               }}
               style={[
                 styles.levelChip,
@@ -67,63 +92,63 @@ export default observer(function LearnScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Units Roadmap */}
-        <View style={styles.unitsContainer}>
-          {SEED_UNITS.map((unit, index) => (
-            <Card key={unit.id} style={styles.unitCard}>
-              <View style={styles.unitHeader}>
-                <Badge label={`UNIT ${index + 1}`} variant="primary" />
-                <Text style={styles.unitStatus}>
-                  {index === 0 ? '✓ Đã hoàn thành' : index === 1 ? '▶ Đang học' : '🔒 Đã khóa'}
-                </Text>
-              </View>
+        {isLoading ? (
+          <ActivityIndicator size="large" color={colors.accent} style={{ marginTop: 40 }} />
+        ) : (
+          /* Units Roadmap */
+          <View style={styles.unitsContainer}>
+            {units.map((unit, index) => (
+              <Card key={unit.id} style={styles.unitCard}>
+                <View style={styles.unitHeader}>
+                  <Badge label={`UNIT ${index + 1}`} variant="primary" />
+                  <Text style={styles.unitStatus}>
+                    {index === 0 ? '▶ Đang học' : '🔒 Đã mở'}
+                  </Text>
+                </View>
 
-              <Text style={styles.unitTitle}>{unit.title}</Text>
-              <Text style={styles.unitDescription}>{unit.description}</Text>
+                <Text style={styles.unitTitle}>{unit.title}</Text>
+                <Text style={styles.unitDescription}>{unit.description}</Text>
 
-              {/* Lessons within this Unit */}
-              <View style={styles.lessonsList}>
-                <TouchableOpacity
-                  style={styles.lessonItem}
-                  onPress={() => handleStartLesson('lesson-1')}
-                >
-                  <Text style={styles.lessonIcon}>●</Text>
-                  <View style={styles.lessonTextWrapper}>
-                    <Text style={styles.lessonItemTitle}>Bài 1: Trợ từ これ・それ・あれ</Text>
-                    <Text style={styles.lessonItemMeta}>Ngữ pháp • 8 phút</Text>
-                  </View>
-                  <Text style={styles.lessonItemAction}>Học lại</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[styles.lessonItem, styles.lessonItemActive]}
-                  onPress={() => handleStartLesson('lesson-2')}
-                >
-                  <Text style={[styles.lessonIcon, { color: colors.accent }]}>▶</Text>
-                  <View style={styles.lessonTextWrapper}>
-                    <Text style={[styles.lessonItemTitle, { color: colors.accent }]}>
-                      Bài 2: Mẫu câu 〜てはいけません (Cấm đoán)
-                    </Text>
-                    <Text style={styles.lessonItemMeta}>Ngữ pháp & Kanji • 10 phút</Text>
-                  </View>
-                  <Badge label="Đang học" variant="danger" />
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.lessonItem}
-                  onPress={() => handleStartLesson('lesson-3')}
-                >
-                  <Text style={styles.lessonIcon}>○</Text>
-                  <View style={styles.lessonTextWrapper}>
-                    <Text style={styles.lessonItemTitle}>Bài 3: Kanji 休 (Hưu) & Từ ghép</Text>
-                    <Text style={styles.lessonItemMeta}>Kanji • 6 phút</Text>
-                  </View>
-                  <Text style={styles.lessonItemAction}>Chưa học</Text>
-                </TouchableOpacity>
-              </View>
-            </Card>
-          ))}
-        </View>
+                {/* Lessons within this Unit */}
+                <View style={styles.lessonsList}>
+                  {unit.lessons.map((lesson, lIdx) => (
+                    <TouchableOpacity
+                      key={lesson.id}
+                      style={[
+                        styles.lessonItem,
+                        lIdx === 0 && styles.lessonItemActive,
+                      ]}
+                      onPress={() => handleStartLesson(lesson.id)}
+                    >
+                      <Text
+                        style={[
+                          styles.lessonIcon,
+                          lIdx === 0 && { color: colors.accent },
+                        ]}
+                      >
+                        {lIdx === 0 ? '▶' : '●'}
+                      </Text>
+                      <View style={styles.lessonTextWrapper}>
+                        <Text
+                          style={[
+                            styles.lessonItemTitle,
+                            lIdx === 0 && { color: colors.accent },
+                          ]}
+                        >
+                          {lesson.title}
+                        </Text>
+                        <Text style={styles.lessonItemMeta}>
+                          {lesson.type === 'grammar' ? 'Ngữ pháp & Kanji' : 'Ôn tập'} • {lesson.durationMinutes} phút
+                        </Text>
+                      </View>
+                      <Text style={styles.lessonItemAction}>Học ➔</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </Card>
+            ))}
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -275,4 +300,3 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
-
