@@ -161,7 +161,8 @@ export default observer(function LessonRunnerScreen() {
             {grammar.examples.map((ex, idx) => (
               <InteractiveSentence
                 key={idx}
-                tokens={ex.tokens || []}
+                sentence={ex.japanese}
+                tokens={ex.tokens && ex.tokens.length > 0 ? ex.tokens : undefined}
                 meaningVi={ex.meaningVi}
                 romajiSentence={ex.reading}
               />

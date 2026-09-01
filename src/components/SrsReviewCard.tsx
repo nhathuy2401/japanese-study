@@ -4,6 +4,7 @@ import { observer } from 'mobx-react-lite';
 import { SrsCardData, SrsRating } from '../domain/entities/types';
 import { useReviewStore } from '../stores/StoreContext';
 import { colors } from '../theme/colors';
+import { FuriganaText } from './FuriganaText';
 
 interface SrsReviewCardProps {
   card: SrsCardData;
@@ -60,7 +61,12 @@ export const SrsReviewCard: React.FC<SrsReviewCardProps> = observer(({ card }) =
             {card.extraInfo && <Text style={styles.extraInfo}>{card.extraInfo}</Text>}
             {card.exampleSentence && (
               <View style={styles.exampleBox}>
-                <Text style={styles.exampleText}>💬 {card.exampleSentence}</Text>
+                <FuriganaText
+                  text={card.exampleSentence}
+                  fontSize={15}
+                  furiganaFontSize={9}
+                  style={{ marginBottom: 4 }}
+                />
               </View>
             )}
           </View>

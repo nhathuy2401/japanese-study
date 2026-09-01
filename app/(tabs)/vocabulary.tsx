@@ -14,6 +14,7 @@ import { observer } from 'mobx-react-lite';
 import { Badge } from '../../src/components/Badge';
 import { Button } from '../../src/components/Button';
 import { Card } from '../../src/components/Card';
+import { FuriganaText } from '../../src/components/FuriganaText';
 import { JlptLevel } from '../../src/services/vocabulary/jlptVocabApi';
 import { useVocabularyStore } from '../../src/stores/StoreContext';
 import { colors } from '../../src/theme/colors';
@@ -111,12 +112,17 @@ export default observer(function VocabularyScreen() {
         </View>
 
         <View style={styles.wordArea}>
-          <Text style={styles.word}>{word.word}</Text>
+          <FuriganaText
+            text={word.word}
+            fontSize={36}
+            furiganaFontSize={14}
+            forceShow={vocabularyStore.isAnswerVisible}
+            style={styles.wordFuriganaWrapper}
+          />
           {!vocabularyStore.isAnswerVisible ? (
             <Text style={styles.prompt}>Bạn còn nhớ cách đọc và ý nghĩa của từ này không?</Text>
           ) : (
             <View style={styles.answerArea}>
-              <Text style={styles.furigana}>{word.furigana}</Text>
               <Text style={styles.romaji}>{word.romaji}</Text>
               <View style={styles.divider} />
               <Text style={styles.meaningLabel}>
@@ -392,6 +398,10 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 1,
     textAlign: 'center',
+  },
+  wordFuriganaWrapper: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   prompt: {
     color: colors.dark.textSecondary,

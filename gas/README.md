@@ -57,16 +57,22 @@ Trong giao diện Google Apps Script:
 
 Ứng dụng hiện được trang bị sẵn **8,385 từ vựng JLPT (N5 - N1)** đã được gắn nghĩa **Thuần Việt** tự nhiên (không dùng âm Hán-Việt khô cứng).
 
-### Cách đưa kho dữ liệu Subtitles vào dự án Google Apps Script của bạn:
-1. Mở dự án Apps Script tại link: [Google Apps Script Project](https://script.google.com/u/1/home/projects/1sEZq5gxS0PAqKF_-Onsk4pcRlUWvOVxAnGcOmd8hfNGpjWGnE3ORvpwy/edit).
-2. Ở cột bên trái cạnh chữ **Tệp (Files)**, nhấn vào biểu tượng **Dấu cộng `+`** ➔ Chọn **Tập lệnh (Script)**.
-3. Đặt tên file là `VocabularySubtitles` (sẽ tạo thành `VocabularySubtitles.gs`).
-4. Copy toàn bộ nội dung file [`gas/VocabularySubtitles.js`](file:///Users/ccvn/Desktop/japanese-study/gas/VocabularySubtitles.js) trong dự án và dán vào.
-5. Cập nhật lại file `Code.gs` từ [`gas/Code.js`](file:///Users/ccvn/Desktop/japanese-study/gas/Code.js) rồi nhấn **Lưu (Save 💾)**.
-6. Vào **Deploy ➔ Manage deployments ➔ Edit ➔ Chọn New version ➔ Bấm Deploy**.
+### Trạng thái tích hợp tự động:
+Toàn bộ mã nguồn và dữ liệu đã được tự động đẩy trực tiếp vào dự án Google Apps Script của bạn tại [script.google.com project edit](https://script.google.com/u/1/home/projects/1sEZq5gxS0PAqKF_-Onsk4pcRlUWvOVxAnGcOmd8hfNGpjWGnE3ORvpwy/edit):
+- `Code.gs` (Router API và Gemini Proxy)
+- `VocabularySubtitles_Part1.gs` (Kho dữ liệu Việt Sub phần 1)
+- `VocabularySubtitles_Part2.gs` (Kho dữ liệu Việt Sub phần 2 & hàm tra cứu tự động)
+- `appsscript.json` (Cấu hình quyền Web App V8)
 
-- Ứng dụng mobile đã nạp sẵn file offline `src/data/generated/vocabulary_viet_sub.json` nên sẽ hiển thị nghĩa tiếng Việt ngay lập tức (0ms).
-- Khi có từ mới ngoài kho, app sẽ tự động gửi request đến endpoint `/ai/vocabulary-translation` của Google Apps Script để dịch bổ sung.
+### Các bước hoàn tất trong Apps Script Editor:
+1. Mở dự án tại [Google Apps Script Editor](https://script.google.com/u/1/home/projects/1sEZq5gxS0PAqKF_-Onsk4pcRlUWvOVxAnGcOmd8hfNGpjWGnE3ORvpwy/edit) (F5 tải lại trang để thấy các file).
+2. Chọn hàm `doGet` ở thanh chọn hàm trên cùng và bấm nút **Chạy (Run ▶️)** một lần để cấp quyền Google Account nếu được hỏi.
+3. Nhấp vào **Triển khai (Deploy) ➔ Quản lý bản triển khai (Manage deployments)**:
+   - Bạn sẽ thấy bản triển khai Web App sẵn sàng với URL:
+     `https://script.google.com/macros/s/AKfycbz3jvjPF01JNpUciXuB9TrqL9etIoUm78c0sg1-JqiqIZYxx3jbP23z7dMQ6Iu0XTjj/exec`
+4. Cấu hình Script Properties (nếu dùng thêm Gemini AI để mở rộng):
+   - `GEMINI_API_KEY`: API Key Gemini của bạn.
+   - `FEEDBACK_SHEET_ID`: Spreadsheet ID của bạn.
 
 ---
 

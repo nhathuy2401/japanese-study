@@ -25,7 +25,9 @@ const CANDIDATE_MODELS = [
 
 // Router for GET requests
 function doGet(e) {
-  const path = e.parameter.path || (e.pathInfo ? '/' + e.pathInfo : '/health');
+  e = e || { parameter: {} };
+  const params = e.parameter || {};
+  const path = params.path || (e.pathInfo ? '/' + e.pathInfo : '/health');
   
   if (path === '/health' || path === 'health') {
     return createJsonResponse({
@@ -34,8 +36,10 @@ function doGet(e) {
       service: 'nihongo-local-gas',
       timestamp: new Date().toISOString(),
     });
+  }
+
   if (path === '/vocabulary-subtitles' || path === 'vocabulary-subtitles') {
-    const word = e.parameter.word || e.parameter.q;
+    const word = params.word || params.q;
     if (word && typeof lookupVocabularySubtitle === 'function') {
       const meaningVi = lookupVocabularySubtitle(word);
       return createJsonResponse({ ok: true, word: word, meaningVi: meaningVi });
@@ -44,6 +48,17 @@ function doGet(e) {
   }
 
   return createErrorResponse('Endpoint không hợp lệ', 404);
+}
+
+// Hàm chạy kiểm tra trực tiếp trong Apps Script Editor để cấp quyền và kiểm tra kết quả
+function testApp() {
+  Logger.log('🚀 Đang chạy kiểm tra doGet()...');
+  const health = doGet();
+  Logger.log('Health check: ' + health.getContent());
+
+  Logger.log('🚀 Đang kiểm tra Việt Sub...');
+  const sample = doGet({ parameter: { path: '/vocabulary-subtitles', word: '毎朝' } });
+  Logger.log('Việt Sub 毎朝: ' + sample.getContent());
 }
 
 // Router for POST requests

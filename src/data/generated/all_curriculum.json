@@ -1,22 +1,4 @@
-export interface LessonMeta {
-  id: string;
-  title: string;
-  type: 'grammar' | 'kanji' | 'reading' | 'review';
-  durationMinutes: number;
-  grammarPointId?: string;
-  kanjiId?: string;
-}
-
-export interface UnitData {
-  id: string;
-  levelId: 'n5' | 'n4' | 'n3' | 'n2';
-  title: string;
-  description: string;
-  sortOrder: number;
-  lessons: LessonMeta[];
-}
-
-export const CURRICULUM_UNITS: Record<string, UnitData[]> = {
+{
   "n5": [
     {
       "id": "n5-u1",
@@ -8914,4 +8896,4 @@ export const CURRICULUM_UNITS: Record<string, UnitData[]> = {
       ]
     }
   ]
-};
+}

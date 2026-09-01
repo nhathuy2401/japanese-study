@@ -8,8 +8,11 @@ import { typography } from '../theme/typography';
 import { hapticService } from '../services/haptics/hapticService';
 import { PitchVisualizer } from './PitchVisualizer';
 
+import { parseFurigana } from '../utils/furiganaHelper';
+
 interface InteractiveSentenceProps {
-  tokens: JapaneseToken[];
+  tokens?: JapaneseToken[];
+  sentence?: string;
   meaningVi: string;
   romajiSentence?: string;
   onAudioPlay?: () => void;
@@ -17,6 +20,7 @@ interface InteractiveSentenceProps {
 
 export const InteractiveSentence: React.FC<InteractiveSentenceProps> = observer(({
   tokens,
+  sentence,
   meaningVi,
   romajiSentence,
   onAudioPlay,
@@ -25,6 +29,37 @@ export const InteractiveSentence: React.FC<InteractiveSentenceProps> = observer(
   const notebook = useNotebookStore();
   const [selectedToken, setSelectedToken] = useState<JapaneseToken | null>(null);
   const [revealedIds, setRevealedIds] = useState<Record<string, boolean>>({});
+
+  // Tự động phân tích và gán Furigana chính xác cho các token có Kanji
+  const effectiveTokens = React.useMemo(() => {
+    if (tokens && tokens.length > 0) {
+      return tokens.map((token, i) => {
+        if (!token.furigana || token.furigana === token.kanji) {
+          const segs = parseFurigana(token.kanji);
+          const furi = segs
+            .map((s) => s.furigana || s.text)
+            .join('');
+          if (furi && furi !== token.kanji) {
+            return { ...token, furigana: furi };
+          }
+        }
+        return token;
+      });
+    }
+
+    if (sentence) {
+      const segs = parseFurigana(sentence);
+      return segs.map((s, i) => ({
+        id: `seg-${i}`,
+        kanji: s.text,
+        furigana: s.furigana || s.text,
+        meaningVi: '',
+        pos: s.isKanji ? 'Từ Kanji' : 'Trợ từ / Kana',
+      }));
+    }
+
+    return [];
+  }, [tokens, sentence]);
 
   const handleTokenPress = (token: JapaneseToken) => {
     hapticService.light();
@@ -68,7 +103,7 @@ export const InteractiveSentence: React.FC<InteractiveSentenceProps> = observer(
 
       {/* Japanese interactive tokens wrap */}
       <View style={styles.tokensWrapper}>
-        {tokens.map((token) => {
+        {effectiveTokens.map((token) => {
           const showFuri = isFuriganaVisible(token);
           return (
             <TouchableOpacity

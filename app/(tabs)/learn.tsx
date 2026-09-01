@@ -44,6 +44,11 @@ export default observer(function LearnScreen() {
     router.push(`/lesson/${lessonId}` as any);
   };
 
+  const handleStartUnitQuiz = (unitId: string) => {
+    hapticService.medium();
+    router.push(`/quiz/${unitId}` as any);
+  };
+
   const handleSkipLevel = () => {
     hapticService.medium();
     alert('Tính năng Mở khóa vượt cấp (Skip Checkpoint): Bạn có thể làm bài kiểm tra 15 câu để mở khóa thẳng N4/N3/N2!');
@@ -145,6 +150,24 @@ export default observer(function LearnScreen() {
                     </TouchableOpacity>
                   ))}
                 </View>
+
+                {/* Nút Bài kiểm tra Unit (Quiz) */}
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={() => handleStartUnitQuiz(unit.id)}
+                  style={styles.unitQuizButton}
+                >
+                  <View style={styles.unitQuizLeft}>
+                    <Text style={styles.unitQuizIcon}>🎯</Text>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.unitQuizTitle}>Bài kiểm tra Unit {index + 1}</Text>
+                      <Text style={styles.unitQuizSubtitle}>5 câu trắc nghiệm & sắp xếp câu · +50 XP</Text>
+                    </View>
+                  </View>
+                  <View style={styles.unitQuizBadge}>
+                    <Text style={styles.unitQuizBadgeText}>Vào thi ➔</Text>
+                  </View>
+                </TouchableOpacity>
               </Card>
             ))}
           </View>
@@ -298,5 +321,46 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#94A3B8',
     fontWeight: '600',
+  },
+  unitQuizButton: {
+    marginTop: 14,
+    backgroundColor: 'rgba(99, 102, 241, 0.12)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(99, 102, 241, 0.35)',
+    borderRadius: 14,
+    padding: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  unitQuizLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    flex: 1,
+  },
+  unitQuizIcon: {
+    fontSize: 22,
+  },
+  unitQuizTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: colors.dark.textPrimary,
+  },
+  unitQuizSubtitle: {
+    fontSize: 11,
+    color: '#94A3B8',
+    marginTop: 2,
+  },
+  unitQuizBadge: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  unitQuizBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
   },
 });

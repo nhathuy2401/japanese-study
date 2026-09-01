@@ -1,6 +1,6 @@
 import { CURRICULUM_UNITS, UnitData, LessonMeta } from '../../data/curriculum/curriculumData';
 import { getFirestoreDb, isFirebaseConfigured } from '../firebase/firebaseConfig';
-import { collection, doc, getDocs, getDoc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 
 export const curriculumService = {
   async getUnitsByLevel(level: 'n5' | 'n4' | 'n3' | 'n2'): Promise<UnitData[]> {
@@ -12,7 +12,7 @@ export const curriculumService = {
         const snap = await getDoc(doc(db, 'curriculum', level));
         if (snap.exists()) {
           const data = snap.data();
-          if (data && Array.isArray(data.units) && data.units.length > 0) {
+          if (data && Array.isArray(data.units) && data.units.length >= localUnits.length) {
             return data.units as UnitData[];
           }
         }
@@ -28,6 +28,14 @@ export const curriculumService = {
     return CURRICULUM_UNITS;
   },
 
+  getUnitById(unitId: string): UnitData | null {
+    for (const lvl of Object.keys(CURRICULUM_UNITS)) {
+      const found = CURRICULUM_UNITS[lvl].find((u) => u.id === unitId);
+      if (found) return found;
+    }
+    return null;
+  },
+
   findLessonById(lessonId: string): LessonMeta | null {
     for (const lvl of Object.keys(CURRICULUM_UNITS)) {
       for (const unit of CURRICULUM_UNITS[lvl]) {
@@ -38,4 +46,3 @@ export const curriculumService = {
     return null;
   },
 };
-
