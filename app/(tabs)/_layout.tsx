@@ -1,22 +1,27 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { Text } from 'react-native';
+import { observer } from 'mobx-react-lite';
+import { useSettingsStore } from '../../src/stores/StoreContext';
 import { colors } from '../../src/theme/colors';
 
-export default function TabLayout() {
+export default observer(function TabLayout() {
+  const settings = useSettingsStore();
+  const theme = settings?.currentTheme || colors.dark;
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: colors.dark.bgSurface,
-          borderTopColor: colors.dark.borderSubtle,
+          backgroundColor: theme.bgSurface,
+          borderTopColor: theme.borderSubtle,
           height: 62,
           paddingBottom: 8,
           paddingTop: 8,
         },
-        tabBarActiveTintColor: colors.accent,
-        tabBarInactiveTintColor: '#64748B',
+        tabBarActiveTintColor: theme.accent,
+        tabBarInactiveTintColor: theme.textSecondary,
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: '700',
@@ -64,7 +69,7 @@ export default function TabLayout() {
         options={{
           title: 'Sổ tay',
           tabBarIcon: ({ focused }) => (
-            <Text style={{ fontSize: 20 }}>{focused ? '📖' : '📑'}</Text>
+            <Text style={{ fontSize: 20 }}>{focused ? '⭐' : '☆'}</Text>
           ),
         }}
       />
@@ -79,5 +84,4 @@ export default function TabLayout() {
       />
     </Tabs>
   );
-}
-
+});

@@ -13,6 +13,7 @@ import { FuriganaMode } from '../../src/domain/entities/types';
 
 export default observer(function SettingsScreen() {
   const settings = useSettingsStore();
+  const theme = settings?.currentTheme || colors.dark;
 
   const [inputKey, setInputKey] = useState('');
   const [isTestingKey, setIsTestingKey] = useState(false);
@@ -67,67 +68,135 @@ export default observer(function SettingsScreen() {
   ];
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.bgCanvas }]}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>CÀI ĐẶT ỨNG DỤNG</Text>
-          <Text style={styles.headerSubtitle}>Tùy biến hiển thị & Thiết lập Trợ giảng AI</Text>
+          <Text style={[styles.headerTitle, { color: theme.textPrimary }]}>CÀI ĐẶT ỨNG DỤNG</Text>
+          <Text style={[styles.headerSubtitle, { color: theme.textSecondary }]}>
+            Tùy biến hiển thị & Thiết lập Trợ giảng AI
+          </Text>
         </View>
 
-        {/* 1. Adaptive Reading Modes (Chế độ đọc thích ứng) */}
-        <Card style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>CHẾ ĐỘ HIỂN THỊ FURIGANA</Text>
+        {/* 1. GIAO DIỆN & MÀU SẮC (THEME MODE: SÁNG / TỐI) */}
+        <Card style={[styles.sectionCard, { backgroundColor: theme.bgSurface, borderColor: theme.borderSubtle }]}>
+          <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>GIAO DIỆN & MÀU SẮC</Text>
+          <Text style={[styles.themeSubtitle, { color: theme.textTertiary }]}>
+            Chọn tông màu hiển thị dịu mắt và phù hợp với thói quen học tập của bạn
+          </Text>
+
+          <View style={styles.themeGrid}>
+            {/* Dark Mode Option Card */}
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => settings.setThemeMode('dark')}
+              style={[
+                styles.themeOptionCard,
+                styles.themeDarkBg,
+                settings.themeMode === 'dark' && styles.themeOptionActiveDark,
+              ]}
+            >
+              <View style={styles.themeCardTop}>
+                <Text style={styles.themeEmoji}>🌙</Text>
+                <View style={styles.themeRadioCircle}>
+                  {settings.themeMode === 'dark' && <View style={[styles.radioInner, { backgroundColor: '#F43F5E' }]} />}
+                </View>
+              </View>
+              <Text style={styles.themeOptionTitleDark}>Chế độ Tối (Dark)</Text>
+              <Text style={styles.themeOptionDescDark}>Đen sâu & Đỏ hoa anh đào Sakura (Mặc định)</Text>
+              <View style={styles.colorPillsRow}>
+                <View style={[styles.colorDot, { backgroundColor: '#0B0F17' }]} />
+                <View style={[styles.colorDot, { backgroundColor: '#151D2A' }]} />
+                <View style={[styles.colorDot, { backgroundColor: '#F43F5E' }]} />
+              </View>
+            </TouchableOpacity>
+
+            {/* Light Mode Option Card */}
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => settings.setThemeMode('light')}
+              style={[
+                styles.themeOptionCard,
+                styles.themeLightBg,
+                settings.themeMode === 'light' && styles.themeOptionActiveLight,
+              ]}
+            >
+              <View style={styles.themeCardTop}>
+                <Text style={styles.themeEmoji}>☀️</Text>
+                <View style={styles.themeRadioCircleLight}>
+                  {settings.themeMode === 'light' && <View style={[styles.radioInner, { backgroundColor: '#D97706' }]} />}
+                </View>
+              </View>
+              <Text style={styles.themeOptionTitleLight}>Chế độ Sáng (Light)</Text>
+              <Text style={styles.themeOptionDescLight}>Trắng ngà & Vàng hổ phách dịu mắt</Text>
+              <View style={styles.colorPillsRow}>
+                <View style={[styles.colorDot, { backgroundColor: '#FAF8F5' }]} />
+                <View style={[styles.colorDot, { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E7E0D3' }]} />
+                <View style={[styles.colorDot, { backgroundColor: '#D97706' }]} />
+              </View>
+            </TouchableOpacity>
+          </View>
+        </Card>
+
+        {/* 2. Adaptive Reading Modes (Chế độ đọc thích ứng) */}
+        <Card style={[styles.sectionCard, { backgroundColor: theme.bgSurface, borderColor: theme.borderSubtle }]}>
+          <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>CHẾ ĐỘ HIỂN THỊ FURIGANA</Text>
           <View style={styles.optionsList}>
-            {furiganaOptions.map((opt) => (
-              <TouchableOpacity
-                key={opt.mode}
-                activeOpacity={0.7}
-                onPress={() => settings.setFuriganaMode(opt.mode)}
-                style={[
-                  styles.optionRow,
-                  settings.furiganaMode === opt.mode && styles.optionRowActive,
-                ]}
-              >
-                <View style={styles.radioCircle}>
-                  {settings.furiganaMode === opt.mode && <View style={styles.radioInner} />}
-                </View>
-                <View style={styles.optionInfo}>
-                  <Text style={styles.optionLabel}>{opt.label}</Text>
-                  <Text style={styles.optionDesc}>{opt.desc}</Text>
-                </View>
-              </TouchableOpacity>
-            ))}
+            {furiganaOptions.map((opt) => {
+              const isActive = settings.furiganaMode === opt.mode;
+              return (
+                <TouchableOpacity
+                  key={opt.mode}
+                  activeOpacity={0.7}
+                  onPress={() => settings.setFuriganaMode(opt.mode)}
+                  style={[
+                    styles.optionRow,
+                    { backgroundColor: theme.bgSubtle, borderColor: theme.borderSubtle },
+                    isActive && { borderColor: theme.accent, backgroundColor: theme.accentBg },
+                  ]}
+                >
+                  <View style={[styles.radioCircle, { borderColor: theme.textTertiary }]}>
+                    {isActive && <View style={[styles.radioInner, { backgroundColor: theme.accent }]} />}
+                  </View>
+                  <View style={styles.optionInfo}>
+                    <Text style={[styles.optionLabel, { color: theme.textPrimary }]}>{opt.label}</Text>
+                    <Text style={[styles.optionDesc, { color: theme.textSecondary }]}>{opt.desc}</Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
           </View>
 
           {/* Romaji Switch */}
-          <View style={styles.switchRow}>
+          <View style={[styles.switchRow, { borderTopColor: theme.borderSubtle }]}>
             <View style={styles.switchInfo}>
-              <Text style={styles.switchLabel}>Hiển thị chữ Latinh (Romaji)</Text>
-              <Text style={styles.switchDesc}>Tắt để tăng tốc độ ghi nhớ bảng chữ cái Kana</Text>
+              <Text style={[styles.switchLabel, { color: theme.textPrimary }]}>Hiển thị chữ Latinh (Romaji)</Text>
+              <Text style={[styles.switchDesc, { color: theme.textSecondary }]}>
+                Tắt để tăng tốc độ ghi nhớ bảng chữ cái Kana
+              </Text>
             </View>
             <Switch
               value={settings.showRomaji}
               onValueChange={(val) => settings.toggleRomaji(val)}
-              trackColor={{ false: '#334155', true: colors.accent }}
+              trackColor={{ false: theme.borderSubtle, true: theme.accent }}
               thumbColor="#FFFFFF"
             />
           </View>
         </Card>
 
-        {/* 2. Gemini AI Integration Setup */}
-        <Card style={styles.sectionCard}>
+        {/* 3. Gemini AI Integration Setup */}
+        <Card style={[styles.sectionCard, { backgroundColor: theme.bgSurface, borderColor: theme.borderSubtle }]}>
           <View style={styles.cardHeaderRow}>
-            <Text style={styles.sectionTitle}>TRỢ GIẢNG GEMINI AI</Text>
+            <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>TRỢ GIẢNG GEMINI AI</Text>
             <Switch
               value={settings.isAiEnabled}
               onValueChange={(val) => settings.toggleAi(val)}
-              trackColor={{ false: '#334155', true: colors.accent }}
+              trackColor={{ false: theme.borderSubtle, true: theme.accent }}
               thumbColor="#FFFFFF"
             />
           </View>
           
-          <Text style={styles.aiPrivacyNote}>
+          <Text style={[styles.aiPrivacyNote, { color: theme.textSecondary }]}>
             {isGasConfigured
               ? '✨ AI được kết nối an toàn qua Google Apps Script Serverless. Bạn có thể sử dụng tính năng giải thích sâu và chấm bài viết mà không cần tự nhập API key.'
               : 'Ứng dụng hoạt động 100% offline. Bạn có thể nhập Gemini API key cá nhân từ Google AI Studio hoặc cấu hình Google Apps Script Backend.'}
@@ -139,115 +208,81 @@ export default observer(function SettingsScreen() {
             onPress={() => setShowAdvancedAi(!showAdvancedAi)}
             activeOpacity={0.7}
           >
-            <Text style={styles.advancedToggleText}>
+            <Text style={[styles.advancedToggleText, { color: theme.accent }]}>
               {showAdvancedAi ? '▼ Ẩn cài đặt API key cá nhân' : '▶ Cấu hình API key cá nhân (Tùy chọn nâng cao)'}
             </Text>
           </TouchableOpacity>
 
           {showAdvancedAi && (
-            <View style={styles.advancedBox}>
+            <View style={[styles.advancedBox, { backgroundColor: theme.bgSubtle, borderColor: theme.borderSubtle }]}>
               {settings.isAiConfigured ? (
                 <View style={styles.configuredBox}>
-                  <Text style={styles.configuredLabel}>API Key cá nhân đang lưu:</Text>
-                  <Text style={styles.maskedKey}>{settings.maskedApiKey}</Text>
-                  <View style={styles.configuredActions}>
+                  <View style={styles.keyBadge}>
+                    <Text style={styles.keyBadgeDot}>●</Text>
+                    <Text style={styles.keyBadgeText}>ĐÃ THIẾT LẬP KEY TRONG VÙNG BẢO MẬT</Text>
+                  </View>
+                  <Text style={[styles.maskedKeyText, { color: theme.textPrimary }]}>{settings.maskedApiKey}</Text>
+                  
+                  <View style={styles.keyActionsRow}>
                     <Button
                       title="Kiểm tra kết nối"
                       variant="outline"
                       size="sm"
                       loading={isTestingKey}
                       onPress={handleTestKey}
-                      style={styles.keyBtn}
                     />
                     <Button
                       title="Xóa Key"
                       variant="danger"
                       size="sm"
                       onPress={handleRemoveKey}
-                      style={styles.keyBtn}
                     />
                   </View>
                 </View>
               ) : (
-                <View style={styles.keyInputBox}>
+                <View style={styles.inputBox}>
+                  <Text style={[styles.inputLabel, { color: theme.textPrimary }]}>Nhập Gemini API Key từ Google AI Studio:</Text>
                   <TextInput
-                    placeholder="Dán Gemini API Key cá nhân..."
-                    placeholderTextColor="#64748B"
+                    style={[styles.keyInput, { backgroundColor: theme.bgSurface, color: theme.textPrimary, borderColor: theme.borderSubtle }]}
+                    placeholder="Dán AIzaSy..."
+                    placeholderTextColor={theme.textTertiary}
                     value={inputKey}
                     onChangeText={setInputKey}
+                    autoCapitalize="none"
+                    autoCorrect={false}
                     secureTextEntry
-                    style={styles.keyInput}
                   />
-                  <View style={styles.keyInputActions}>
+                  <View style={styles.saveBtnRow}>
                     <Button
-                      title="Lưu API Key"
+                      title="Lưu Key Bảo Mật"
                       variant="primary"
+                      size="md"
                       onPress={handleSaveKey}
-                      style={styles.saveKeyBtn}
-                    />
-                    <Button
-                      title="Test"
-                      variant="outline"
-                      loading={isTestingKey}
-                      onPress={handleTestKey}
-                      style={styles.testKeyBtn}
                     />
                   </View>
                 </View>
               )}
             </View>
           )}
-
-          <View style={styles.switchRow}>
-            <View style={styles.switchInfo}>
-              <Text style={styles.switchLabel}>Cho phép dùng qua 3G/4G/5G</Text>
-              <Text style={styles.switchDesc}>Gửi câu hỏi AI qua dữ liệu di động</Text>
-            </View>
-            <Switch
-              value={settings.allowAiMobileData}
-              onValueChange={(val) => {
-                settings.allowAiMobileData = val;
-              }}
-              trackColor={{ false: '#334155', true: colors.success }}
-              thumbColor="#FFFFFF"
-            />
-          </View>
         </Card>
 
-        {/* 3. Sensory Feedback & Haptics */}
-        <Card style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>TRẢI NGHIỆM HỌC TẬP</Text>
-
-          <View style={styles.switchRow}>
-            <View style={styles.switchInfo}>
-              <Text style={styles.switchLabel}>Phản hồi rung vật lý (Haptics)</Text>
-              <Text style={styles.switchDesc}>Rung nhẹ khi chạm từ, đúng/sai câu đố</Text>
-            </View>
-            <Switch
-              value={settings.hapticsEnabled}
-              onValueChange={(val) => settings.setHapticsEnabled(val)}
-              trackColor={{ false: '#334155', true: colors.accent }}
-              thumbColor="#FFFFFF"
-            />
-          </View>
-        </Card>
-
-        {/* 4. Feedback & Community (Góp ý qua Google Sheets) */}
-        <Card style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>HỖ TRỢ & PHẢN HỒI</Text>
-          <Text style={styles.feedbackDesc}>
-            Bạn gặp lỗi hoặc có ý tưởng tính năng mới? Hãy gửi góp ý trực tiếp đến nhóm phát triển.
+        {/* 4. Feedback & Community */}
+        <Card style={[styles.sectionCard, { backgroundColor: theme.bgSurface, borderColor: theme.borderSubtle }]}>
+          <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>PHẢN HỒI & ĐÓNG GÓP Ý KIẾN</Text>
+          <Text style={[styles.feedbackHint, { color: theme.textSecondary }]}>
+            Gặp lỗi phát âm, từ vựng hoặc muốn góp ý tính năng mới? Chúng tôi luôn lắng nghe bạn.
           </Text>
           <Button
-            title="Gửi góp ý & Báo lỗi 📝"
+            title="💬 Gửi phản hồi / Báo lỗi"
             variant="outline"
+            size="md"
             onPress={() => setShowFeedbackModal(true)}
-            style={styles.feedbackButton}
+            style={{ marginTop: 8 }}
           />
         </Card>
       </ScrollView>
 
-      {/* Feedback Modal */}
+      {/* Feedback Bottom Sheet Modal */}
       <FeedbackModal
         visible={showFeedbackModal}
         onClose={() => setShowFeedbackModal(false)}
@@ -259,28 +294,24 @@ export default observer(function SettingsScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.dark.bgCanvas,
   },
   scrollContent: {
     padding: 16,
     paddingBottom: 40,
   },
   header: {
-    marginBottom: 16,
+    marginBottom: 20,
   },
   headerTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '900',
-    color: colors.dark.textPrimary,
     letterSpacing: 0.5,
   },
   headerSubtitle: {
     fontSize: 12,
-    color: '#94A3B8',
     marginTop: 2,
   },
   sectionCard: {
-    backgroundColor: colors.dark.bgSurface,
     borderRadius: 18,
     padding: 16,
     marginBottom: 16,
@@ -288,9 +319,104 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#94A3B8',
     letterSpacing: 0.5,
-    marginBottom: 12,
+    marginBottom: 6,
+  },
+  themeSubtitle: {
+    fontSize: 12,
+    marginBottom: 14,
+    lineHeight: 17,
+  },
+  themeGrid: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  themeOptionCard: {
+    flex: 1,
+    padding: 14,
+    borderRadius: 16,
+    borderWidth: 2,
+  },
+  themeDarkBg: {
+    backgroundColor: '#0B0F17',
+    borderColor: '#243044',
+  },
+  themeLightBg: {
+    backgroundColor: '#FAF8F5',
+    borderColor: '#E7E0D3',
+  },
+  themeOptionActiveDark: {
+    borderColor: '#F43F5E',
+    shadowColor: '#F43F5E',
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  themeOptionActiveLight: {
+    borderColor: '#D97706',
+    shadowColor: '#D97706',
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  themeCardTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  themeEmoji: {
+    fontSize: 24,
+  },
+  themeRadioCircle: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: '#64748B',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  themeRadioCircleLight: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: '#A8A29E',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  themeOptionTitleDark: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#F8FAFC',
+    marginBottom: 4,
+  },
+  themeOptionDescDark: {
+    fontSize: 11,
+    color: '#94A3B8',
+    lineHeight: 15,
+  },
+  themeOptionTitleLight: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#1C1917',
+    marginBottom: 4,
+  },
+  themeOptionDescLight: {
+    fontSize: 11,
+    color: '#78716C',
+    lineHeight: 15,
+  },
+  colorPillsRow: {
+    flexDirection: 'row',
+    gap: 6,
+    marginTop: 12,
+  },
+  colorDot: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
   },
   optionsList: {
     gap: 8,
@@ -299,22 +425,15 @@ const styles = StyleSheet.create({
   optionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.dark.bgSubtle,
     padding: 12,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.04)',
-  },
-  optionRowActive: {
-    borderColor: colors.accent,
-    backgroundColor: 'rgba(244, 63, 94, 0.08)',
   },
   radioCircle: {
     width: 20,
     height: 20,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: '#94A3B8',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -323,7 +442,6 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: colors.accent,
   },
   optionInfo: {
     flex: 1,
@@ -331,115 +449,102 @@ const styles = StyleSheet.create({
   optionLabel: {
     fontSize: 13,
     fontWeight: '700',
-    color: colors.dark.textPrimary,
   },
   optionDesc: {
     fontSize: 11,
-    color: '#94A3B8',
     marginTop: 2,
   },
   switchRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: colors.dark.borderSubtle,
   },
   switchInfo: {
     flex: 1,
-    marginRight: 10,
+    marginRight: 12,
   },
   switchLabel: {
     fontSize: 13,
     fontWeight: '700',
-    color: colors.dark.textPrimary,
   },
   switchDesc: {
     fontSize: 11,
-    color: '#94A3B8',
     marginTop: 2,
   },
   cardHeaderRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    justifyContent: 'space-between',
   },
   aiPrivacyNote: {
     fontSize: 12,
-    color: '#94A3B8',
-    lineHeight: 17,
-    marginBottom: 12,
+    lineHeight: 18,
+    marginTop: 6,
+    marginBottom: 10,
   },
   advancedToggle: {
     paddingVertical: 6,
-    marginBottom: 10,
   },
   advancedToggleText: {
     fontSize: 12,
     fontWeight: '700',
-    color: colors.accent,
   },
   advancedBox: {
-    marginTop: 4,
-    marginBottom: 12,
-  },
-  configuredBox: {
-    backgroundColor: colors.dark.bgSubtle,
+    marginTop: 10,
     padding: 12,
     borderRadius: 12,
-    marginBottom: 8,
+    borderWidth: 1,
   },
-  configuredLabel: {
-    fontSize: 11,
-    color: '#94A3B8',
+  configuredBox: {
+    gap: 8,
   },
-  maskedKey: {
+  keyBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  keyBadgeDot: {
+    color: '#10B981',
+    fontSize: 10,
+  },
+  keyBadgeText: {
+    color: '#10B981',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  maskedKeyText: {
     fontSize: 14,
-    fontWeight: '700',
-    color: colors.dark.textPrimary,
-    marginVertical: 4,
+    fontFamily: 'monospace',
+    fontWeight: '600',
   },
-  configuredActions: {
+  keyActionsRow: {
     flexDirection: 'row',
     gap: 8,
-    marginTop: 8,
+    marginTop: 6,
   },
-  keyBtn: {
-    flex: 1,
+  inputBox: {
+    gap: 8,
   },
-  keyInputBox: {
-    marginBottom: 8,
+  inputLabel: {
+    fontSize: 12,
+    fontWeight: '600',
   },
   keyInput: {
-    backgroundColor: colors.dark.bgSubtle,
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    color: colors.dark.textPrimary,
     fontSize: 13,
-    marginBottom: 8,
     borderWidth: 1,
-    borderColor: colors.dark.borderSubtle,
   },
-  keyInputActions: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  saveKeyBtn: {
-    flex: 3,
-  },
-  testKeyBtn: {
-    flex: 1,
-  },
-  feedbackDesc: {
-    fontSize: 12,
-    color: '#94A3B8',
-    lineHeight: 17,
-    marginBottom: 12,
-  },
-  feedbackButton: {
+  saveBtnRow: {
     marginTop: 4,
+  },
+  feedbackHint: {
+    fontSize: 12,
+    lineHeight: 18,
+    marginBottom: 6,
   },
 });

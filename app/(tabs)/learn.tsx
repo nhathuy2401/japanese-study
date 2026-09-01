@@ -23,9 +23,13 @@ import {
   KanaCharacter,
 } from '../../src/data/kana/kanaData';
 import { CharacterWriteCard } from '../../src/components/CharacterWriteCard';
+import { useSettingsStore } from '../../src/stores/StoreContext';
 
 export default observer(function LearnScreen() {
   const router = useRouter();
+  const settings = useSettingsStore();
+  const theme = settings?.currentTheme || colors.dark;
+
   const [selectedLevelId, setSelectedLevelId] = useState<'intro' | 'n5' | 'n4' | 'n3' | 'n2'>('intro');
   const [units, setUnits] = useState<UnitData[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -84,33 +88,38 @@ export default observer(function LearnScreen() {
     : currentKanaList.filter((k) => k.row === selectedRow);
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.bgCanvas }]}>
       {/* Top Level Selector Chips: Bảng chữ cái (Kana) đứng đầu, ngay cạnh N5 */}
-      <View style={styles.levelSelector}>
+      <View style={[styles.levelSelector, { backgroundColor: theme.bgSurface, borderBottomColor: theme.borderSubtle }]}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.levelScroll}>
-          {SEED_LEVELS.map((lvl) => (
-            <TouchableOpacity
-              key={lvl.id}
-              activeOpacity={0.7}
-              onPress={() => {
-                hapticService.light();
-                setSelectedLevelId(lvl.id as any);
-              }}
-              style={[
-                styles.levelChip,
-                selectedLevelId === lvl.id && styles.levelChipActive,
-              ]}
-            >
-              <Text
+          {SEED_LEVELS.map((lvl) => {
+            const isChipActive = selectedLevelId === lvl.id;
+            return (
+              <TouchableOpacity
+                key={lvl.id}
+                activeOpacity={0.7}
+                onPress={() => {
+                  hapticService.light();
+                  setSelectedLevelId(lvl.id as any);
+                }}
                 style={[
-                  styles.levelChipText,
-                  selectedLevelId === lvl.id && styles.levelChipTextActive,
+                  styles.levelChip,
+                  { backgroundColor: theme.bgSubtle },
+                  isChipActive && { backgroundColor: theme.accentBg, borderColor: theme.accent },
                 ]}
               >
-                {lvl.id === 'intro' ? '🎌 Bảng chữ cái' : lvl.title.split(':')[0]}
-              </Text>
-            </TouchableOpacity>
-          ))}
+                <Text
+                  style={[
+                    styles.levelChipText,
+                    { color: theme.textSecondary },
+                    isChipActive && { color: theme.accent, fontWeight: '800' },
+                  ]}
+                >
+                  {lvl.id === 'intro' ? '🎌 Bảng chữ cái' : lvl.title.split(':')[0]}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </ScrollView>
       </View>
 
