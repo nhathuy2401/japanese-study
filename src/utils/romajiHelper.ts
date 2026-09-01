@@ -149,3 +149,4 @@ export function toRomaji(japaneseText: string): string {
 
   return romajiParts.join(' ').replace(/\s+/g, ' ').trim();
 }
+

@@ -22,3 +22,4 @@ describe('romajiHelper', () => {
     expect(romaji2).toContain('sutte');
   });
 });
+
