@@ -1,3 +1,4 @@
+import { callGasApi, getGasBaseUrl } from '../api/gasClient';
 import { getGeminiApiKey } from '../storage/secureStore';
 
 export interface WritingFeedback {
@@ -23,6 +24,8 @@ export class GeminiService {
   private modelName = 'gemini-1.5-flash';
 
   async isConfigured(): Promise<boolean> {
+    const gasUrl = getGasBaseUrl();
+    if (gasUrl && gasUrl.trim().length > 0) return true;
     const key = await getGeminiApiKey();
     return !!key && key.trim().length > 0;
   }
@@ -56,9 +59,27 @@ export class GeminiService {
     targetGrammar: string,
     level: string = 'N5'
   ): Promise<WritingFeedback> {
+    const gasUrl = getGasBaseUrl();
+    
+    // Ưu tiên gọi qua Google Apps Script Web App (không lộ API key ở client)
+    if (gasUrl) {
+      try {
+        return await callGasApi<WritingFeedback>('/ai/writing-feedback', {
+          sentence,
+          targetGrammar,
+          level,
+        });
+      } catch (gasError) {
+        console.warn('[GeminiService] GAS writing-feedback failed, trying local key fallback if available:', gasError);
+        const localKey = await getGeminiApiKey();
+        if (!localKey) throw gasError;
+      }
+    }
+
+    // Fallback: Gọi trực tiếp bằng Gemini API key cá nhân của người dùng
     const apiKey = await getGeminiApiKey();
     if (!apiKey) {
-      throw new Error('Chưa thiết lập Gemini API key trong Cài đặt');
+      throw new Error('Chưa thiết lập URL Google Apps Script hoặc Gemini API key trong Cài đặt');
     }
 
     const systemPrompt = `
@@ -111,9 +132,26 @@ Câu của người học: "${sentence}"
   }
 
   async explainGrammar(pattern: string, currentLevel: string): Promise<GrammarExplainResponse> {
+    const gasUrl = getGasBaseUrl();
+
+    // Ưu tiên gọi qua Google Apps Script Web App
+    if (gasUrl) {
+      try {
+        return await callGasApi<GrammarExplainResponse>('/ai/grammar-explanation', {
+          pattern,
+          level: currentLevel,
+        });
+      } catch (gasError) {
+        console.warn('[GeminiService] GAS grammar-explanation failed, trying local key fallback if available:', gasError);
+        const localKey = await getGeminiApiKey();
+        if (!localKey) throw gasError;
+      }
+    }
+
+    // Fallback: Gọi trực tiếp bằng Gemini API key cá nhân
     const apiKey = await getGeminiApiKey();
     if (!apiKey) {
-      throw new Error('Chưa thiết lập Gemini API key');
+      throw new Error('Chưa thiết lập URL Google Apps Script hoặc Gemini API key');
     }
 
     const prompt = `
@@ -147,4 +185,3 @@ Trả về JSON đúng format:
 }
 
 export const geminiService = new GeminiService();
-

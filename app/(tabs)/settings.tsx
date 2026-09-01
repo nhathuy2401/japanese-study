@@ -6,7 +6,9 @@ import { useSettingsStore } from '../../src/stores/StoreContext';
 import { colors } from '../../src/theme/colors';
 import { Card } from '../../src/components/Card';
 import { Button } from '../../src/components/Button';
+import { FeedbackModal } from '../../src/components/FeedbackModal';
 import { geminiService } from '../../src/services/ai/gemini';
+import { getGasBaseUrl } from '../../src/services/api/gasClient';
 import { FuriganaMode } from '../../src/domain/entities/types';
 
 export default observer(function SettingsScreen() {
@@ -14,6 +16,11 @@ export default observer(function SettingsScreen() {
 
   const [inputKey, setInputKey] = useState('');
   const [isTestingKey, setIsTestingKey] = useState(false);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [showAdvancedAi, setShowAdvancedAi] = useState(false);
+
+  const gasBaseUrl = getGasBaseUrl();
+  const isGasConfigured = !!gasBaseUrl && gasBaseUrl.trim().length > 0;
 
   const handleSaveKey = async () => {
     if (!inputKey.trim()) {
@@ -111,7 +118,7 @@ export default observer(function SettingsScreen() {
         {/* 2. Gemini AI Integration Setup */}
         <Card style={styles.sectionCard}>
           <View style={styles.cardHeaderRow}>
-            <Text style={styles.sectionTitle}>TRỢ GIẢNG GEMINI AI (TÙY CHỌN)</Text>
+            <Text style={styles.sectionTitle}>TRỢ GIẢNG GEMINI AI</Text>
             <Switch
               value={settings.isAiEnabled}
               onValueChange={(val) => settings.toggleAi(val)}
@@ -119,57 +126,75 @@ export default observer(function SettingsScreen() {
               thumbColor="#FFFFFF"
             />
           </View>
+          
           <Text style={styles.aiPrivacyNote}>
-            Ứng dụng hoạt động 100% offline. Bạn có thể tự nhập Gemini API key cá nhân từ Google AI Studio để mở khóa tính năng giải thích sâu và chấm bài viết.
+            {isGasConfigured
+              ? '✨ AI được kết nối an toàn qua Google Apps Script Serverless. Bạn có thể sử dụng tính năng giải thích sâu và chấm bài viết mà không cần tự nhập API key.'
+              : 'Ứng dụng hoạt động 100% offline. Bạn có thể nhập Gemini API key cá nhân từ Google AI Studio hoặc cấu hình Google Apps Script Backend.'}
           </Text>
 
-          {settings.isAiConfigured ? (
-            <View style={styles.configuredBox}>
-              <Text style={styles.configuredLabel}>API Key hiện tại:</Text>
-              <Text style={styles.maskedKey}>{settings.maskedApiKey}</Text>
-              <View style={styles.configuredActions}>
-                <Button
-                  title="Kiểm tra kết nối"
-                  variant="outline"
-                  size="sm"
-                  loading={isTestingKey}
-                  onPress={handleTestKey}
-                  style={styles.keyBtn}
-                />
-                <Button
-                  title="Xóa Key"
-                  variant="danger"
-                  size="sm"
-                  onPress={handleRemoveKey}
-                  style={styles.keyBtn}
-                />
-              </View>
-            </View>
-          ) : (
-            <View style={styles.keyInputBox}>
-              <TextInput
-                placeholder="Dán Gemini API Key của bạn vào đây..."
-                placeholderTextColor="#64748B"
-                value={inputKey}
-                onChangeText={setInputKey}
-                secureTextEntry
-                style={styles.keyInput}
-              />
-              <View style={styles.keyInputActions}>
-                <Button
-                  title="Lưu API Key"
-                  variant="primary"
-                  onPress={handleSaveKey}
-                  style={styles.saveKeyBtn}
-                />
-                <Button
-                  title="Test"
-                  variant="outline"
-                  loading={isTestingKey}
-                  onPress={handleTestKey}
-                  style={styles.testKeyBtn}
-                />
-              </View>
+          {/* Advanced / Personal Key Dropdown Toggle */}
+          <TouchableOpacity
+            style={styles.advancedToggle}
+            onPress={() => setShowAdvancedAi(!showAdvancedAi)}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.advancedToggleText}>
+              {showAdvancedAi ? '▼ Ẩn cài đặt API key cá nhân' : '▶ Cấu hình API key cá nhân (Tùy chọn nâng cao)'}
+            </Text>
+          </TouchableOpacity>
+
+          {showAdvancedAi && (
+            <View style={styles.advancedBox}>
+              {settings.isAiConfigured ? (
+                <View style={styles.configuredBox}>
+                  <Text style={styles.configuredLabel}>API Key cá nhân đang lưu:</Text>
+                  <Text style={styles.maskedKey}>{settings.maskedApiKey}</Text>
+                  <View style={styles.configuredActions}>
+                    <Button
+                      title="Kiểm tra kết nối"
+                      variant="outline"
+                      size="sm"
+                      loading={isTestingKey}
+                      onPress={handleTestKey}
+                      style={styles.keyBtn}
+                    />
+                    <Button
+                      title="Xóa Key"
+                      variant="danger"
+                      size="sm"
+                      onPress={handleRemoveKey}
+                      style={styles.keyBtn}
+                    />
+                  </View>
+                </View>
+              ) : (
+                <View style={styles.keyInputBox}>
+                  <TextInput
+                    placeholder="Dán Gemini API Key cá nhân..."
+                    placeholderTextColor="#64748B"
+                    value={inputKey}
+                    onChangeText={setInputKey}
+                    secureTextEntry
+                    style={styles.keyInput}
+                  />
+                  <View style={styles.keyInputActions}>
+                    <Button
+                      title="Lưu API Key"
+                      variant="primary"
+                      onPress={handleSaveKey}
+                      style={styles.saveKeyBtn}
+                    />
+                    <Button
+                      title="Test"
+                      variant="outline"
+                      loading={isTestingKey}
+                      onPress={handleTestKey}
+                      style={styles.testKeyBtn}
+                    />
+                  </View>
+                </View>
+              )}
             </View>
           )}
 
@@ -189,7 +214,7 @@ export default observer(function SettingsScreen() {
           </View>
         </Card>
 
-        {/* 3. Daily Target & Sensory Feedback */}
+        {/* 3. Sensory Feedback & Haptics */}
         <Card style={styles.sectionCard}>
           <Text style={styles.sectionTitle}>TRẢI NGHIỆM HỌC TẬP</Text>
 
@@ -206,7 +231,27 @@ export default observer(function SettingsScreen() {
             />
           </View>
         </Card>
+
+        {/* 4. Feedback & Community (Góp ý qua Google Sheets) */}
+        <Card style={styles.sectionCard}>
+          <Text style={styles.sectionTitle}>HỖ TRỢ & PHẢN HỒI</Text>
+          <Text style={styles.feedbackDesc}>
+            Bạn gặp lỗi hoặc có ý tưởng tính năng mới? Hãy gửi góp ý trực tiếp đến nhóm phát triển.
+          </Text>
+          <Button
+            title="Gửi góp ý & Báo lỗi 📝"
+            variant="outline"
+            onPress={() => setShowFeedbackModal(true)}
+            style={styles.feedbackButton}
+          />
+        </Card>
       </ScrollView>
+
+      {/* Feedback Modal */}
+      <FeedbackModal
+        visible={showFeedbackModal}
+        onClose={() => setShowFeedbackModal(false)}
+      />
     </SafeAreaView>
   );
 });
@@ -324,14 +369,27 @@ const styles = StyleSheet.create({
   aiPrivacyNote: {
     fontSize: 12,
     color: '#94A3B8',
-    lineHeight: 16,
-    marginBottom: 14,
+    lineHeight: 17,
+    marginBottom: 12,
+  },
+  advancedToggle: {
+    paddingVertical: 6,
+    marginBottom: 10,
+  },
+  advancedToggleText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.accent,
+  },
+  advancedBox: {
+    marginTop: 4,
+    marginBottom: 12,
   },
   configuredBox: {
     backgroundColor: colors.dark.bgSubtle,
     padding: 12,
     borderRadius: 12,
-    marginBottom: 14,
+    marginBottom: 8,
   },
   configuredLabel: {
     fontSize: 11,
@@ -352,7 +410,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   keyInputBox: {
-    marginBottom: 14,
+    marginBottom: 8,
   },
   keyInput: {
     backgroundColor: colors.dark.bgSubtle,
@@ -375,5 +433,13 @@ const styles = StyleSheet.create({
   testKeyBtn: {
     flex: 1,
   },
+  feedbackDesc: {
+    fontSize: 12,
+    color: '#94A3B8',
+    lineHeight: 17,
+    marginBottom: 12,
+  },
+  feedbackButton: {
+    marginTop: 4,
+  },
 });
-

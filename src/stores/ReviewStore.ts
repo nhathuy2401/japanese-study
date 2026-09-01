@@ -3,6 +3,7 @@ import { SrsCardData, SrsRating } from '../domain/entities/types';
 import { SEED_SRS_CARDS } from '../db/seed/n5Data';
 import { fsrs } from '../domain/srs/fsrs';
 import { hapticService } from '../services/haptics/hapticService';
+import { sessionSummaryService } from '../services/analytics/sessionSummaryService';
 
 interface UndoHistory {
   card: SrsCardData;
@@ -15,6 +16,9 @@ export class ReviewStore {
   isFlipped: boolean = false;
   undoHistory: UndoHistory | null = null;
   isLoading: boolean = false;
+  private sessionStartTime: number = Date.now();
+  private correctCount: number = 0;
+  private hasLoggedSummary: boolean = false;
 
   constructor() {
     makeAutoObservable(this, {}, { autoBind: true });
@@ -55,6 +59,10 @@ export class ReviewStore {
       index: this.currentIndex,
     };
 
+    if (rating >= 3) {
+      this.correctCount += 1;
+    }
+
     // Calculate FSRS update
     const result = fsrs.calculateNext(card, rating);
     card.stability = result.stability;
@@ -76,6 +84,18 @@ export class ReviewStore {
     // Move to next card
     this.currentIndex += 1;
     this.isFlipped = false;
+
+    // Check if session finished to log summary once
+    if (this.currentIndex >= this.cards.length && !this.hasLoggedSummary) {
+      this.hasLoggedSummary = true;
+      const durationSeconds = Math.max(1, Math.round((Date.now() - this.sessionStartTime) / 1000));
+      void sessionSummaryService.logSessionSummary({
+        level: 'N5',
+        reviewed: this.cards.length,
+        correct: this.correctCount,
+        durationSeconds,
+      });
+    }
   }
 
   undo() {
@@ -92,6 +112,8 @@ export class ReviewStore {
     this.currentIndex = 0;
     this.isFlipped = false;
     this.undoHistory = null;
+    this.sessionStartTime = Date.now();
+    this.correctCount = 0;
+    this.hasLoggedSummary = false;
   }
 }
-

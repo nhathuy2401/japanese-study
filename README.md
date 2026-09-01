@@ -12,8 +12,10 @@
 [![MobX](https://img.shields.io/badge/State-MobX%206-FF9955?logo=mobx&logoColor=white)](https://mobx.js.org/)
 [![Prisma](https://img.shields.io/badge/ORM-Prisma%205-2D3748?logo=prisma&logoColor=white)](https://www.prisma.io/)
 [![SQLite](https://img.shields.io/badge/Database-SQLite%20Local-003B57?logo=sqlite&logoColor=white)](https://www.sqlite.org/)
+[![Firebase](https://img.shields.io/badge/Cloud%20Sync-Firebase%20Firestore-FFCA28?logo=firebase&logoColor=black)](https://firebase.google.com/)
+[![Google Apps Script](https://img.shields.io/badge/Backend-Google%20Apps%20Script-4285F4?logo=google&logoColor=white)](https://developers.google.com/apps-script)
 [![FSRS](https://img.shields.io/badge/Algorithm-FSRS%20v4.5-10B981)](https://github.com/open-spaced-repetition/fsrs4anki)
-[![Gemini](https://img.shields.io/badge/AI%20Tutor-Gemini%20Flash%20(Optional)-8E75FF?logo=google&logoColor=white)](https://ai.google.dev/)
+[![Gemini](https://img.shields.io/badge/AI%20Tutor-Gemini%20Flash%20(GAS%20Proxy)-8E75FF?logo=google&logoColor=white)](https://ai.google.dev/)
 
 </div>
 
@@ -23,10 +25,11 @@
 
 **Nihongo Local** là ứng dụng di động đa nền tảng (iOS & Android) được xây dựng với phương châm **"Zen & Swift — Tối giản tĩnh lặng, Phản hồi tức thời"**. 
 
-Khác với các ứng dụng học tiếng Nhật phụ thuộc hoàn toàn vào máy chủ đám mây, **Nihongo Local hoạt động 100% Offline-First**:
-- Toàn bộ cơ sở dữ liệu giáo trình, từ vựng, ngữ pháp, kanji, nhật ký và thuật toán ôn tập đều nằm ngay trên thiết bị của bạn.
-- Không cần tạo tài khoản, không theo dõi dữ liệu, không quảng cáo làm phiền.
-- **Trợ giảng Gemini AI (Tùy chọn):** Bạn có thể nhập Gemini API key cá nhân để kích hoạt trợ giảng thông minh giải thích chuyên sâu và chấm bài viết khi có kết nối mạng.
+Khác với các ứng dụng học tiếng Nhật phụ thuộc hoàn toàn vào máy chủ đám mây đắt đỏ, **Nihongo Local hoạt động theo triết lý Local-First + Serverless**:
+- **100% Offline-First:** Toàn bộ cơ sở dữ liệu giáo trình, từ vựng, ngữ pháp, kanji, sổ tay đào câu và thuật toán ôn tập FSRS đều nằm ngay trên thiết bị bằng SQLite local (độ trễ 0ms, học được cả trên máy bay).
+- **Trợ giảng Gemini AI an toàn qua Google Apps Script:** AI giải thích sâu và chấm bài viết hoạt động tự động qua backend Web App Serverless, không yêu cầu người học phải tự tạo hay dán API key cá nhân.
+- **Đồng bộ đám mây Firebase Firestore:** Tự động sao lưu tiến độ học, streak, và thẻ FSRS lên Cloud Firestore (`study-2cf98`) khi có mạng internet.
+- **Hệ thống Góp ý & Báo cáo qua Google Sheets:** Tiếp nhận ý kiến đóng góp của người học và thống kê phiên học tự động vào Google Sheets.
 
 ---
 
@@ -93,9 +96,13 @@ Mọi câu tiếng Nhật trong bài học đều được chia tách thành cá
 - Tích hợp và chuẩn hóa hơn **8.000 từ vựng JLPT** từ N5 đến N1.
 - Flashcard ôn tập theo bộ 20 từ, vòng lặp ôn lại các từ khó/quên và tìm kiếm từ vựng tức thời.
 
-### 🔹 3.8. Trợ giảng Gemini AI (Tùy chọn & Bảo mật)
-- Bật/tắt tùy ý, nhập API key cá nhân được mã hóa lưu trong `expo-secure-store`.
-- **Chức năng AI:** Giải thích lại ngữ pháp theo phong cách dễ hiểu hơn, so sánh 2 mẫu câu gần nghĩa, chấm bài tự viết câu và đưa ra nhận xét chi tiết bằng tiếng Việt.
+### 🔹 3.8. Trợ giảng Gemini AI Serverless (Google Apps Script Proxy)
+- Gọi Gemini qua Google Apps Script Web App: Giấu kín API Key, kiểm soát quota tập trung.
+- **Chức năng AI:** Giải thích lại ngữ pháp theo phong cách trực quan, so sánh 2 mẫu câu gần nghĩa, chấm câu tự viết và đưa ra nhận xét chi tiết bằng tiếng Việt.
+
+### 🔹 3.9. Góp ý & Báo lỗi vào Google Sheets (Feedback Modal)
+- Form gửi góp ý trực tiếp từ màn hình Cài đặt với 4 danh mục: *Báo lỗi 🐞, Nội dung 📚, Tính năng mới ✨, Góp ý chung 💬*.
+- Dữ liệu được ghi thẳng vào bảng tính Google Sheets của nhà phát triển qua GAS.
 
 ---
 
@@ -108,10 +115,10 @@ app/
 ├── (tabs)/
 │   ├── index.tsx          # 🏠 Tab 1: Hôm nay (Dashboard, Tiếp tục bài học, Thẻ SRS Due, Nhiệm vụ ngày, Heatmap)
 │   ├── learn.tsx          # 🗺️ Tab 2: Lộ trình học (Cây kỹ năng N5→N2, Skip Checkpoint cho người có nền tảng)
-│   ├── review.tsx         # 📦 Tab 3: Ôn tập ngắt quãng FSRS (Flashcard, 4 nút đánh giá, Undo)
+│   ├── review.tsx         # 📦 Tab 3: Ôn tập ngắt quãng FSRS (Flashcard, 4 nút đánh giá, Undo, Log summary)
 │   ├── vocabulary.tsx     # 📗 Tab 4: Từ vựng JLPT N5→N1 (Flashcard 20 từ, Tìm kiếm, Đánh giá)
 │   ├── notebook.tsx       # 📖 Tab 5: Sổ tay & Sentence Mining (Đào câu đời thực, Tạo thẻ Cloze 1-chạm)
-│   └── settings.tsx       # ⚙️ Tab 6: Cài đặt (Furigana, Romaji, Haptics, Gemini API Key qua SecureStore)
+│   └── settings.tsx       # ⚙️ Tab 6: Cài đặt (Furigana, Romaji, Haptics, Gemini AI, Modal Góp ý)
 ├── lesson/[lessonId].tsx  # 🎓 Trình diễn bài học tương tác 4 bước (Lý thuyết, Token, Xếp câu, Kanji)
 └── pitch/[itemId].tsx     # 🎙️ Phòng luyện cao độ Pitch Accent & Shadowing Audio
 ```
@@ -126,12 +133,14 @@ app/
 | **Routing** | [Expo Router](https://docs.expo.dev/router/introduction/) | Điều hướng File-based Routing hiện đại |
 | **Ngôn ngữ** | [TypeScript 5.3](https://www.typescriptlang.org/) | Type-safe toàn bộ luồng dữ liệu |
 | **State Management** | [MobX 6](https://mobx.js.org/) + `mobx-react-lite` | Quản lý trạng thái phản ứng (Reactive Stores) |
-| **Database & ORM** | [Prisma ORM](https://www.prisma.io/) + SQLite Local | Cơ sở dữ liệu lưu trữ bền vững trên thiết bị |
+| **Database Local** | [Prisma ORM](https://www.prisma.io/) + SQLite Local | Cơ sở dữ liệu lưu trữ bền vững trên thiết bị (Offline) |
+| **Cloud Sync** | [Firebase Cloud Firestore](https://firebase.google.com/) (`study-2cf98`) | Đồng bộ dữ liệu đa thiết bị chuẩn Spark plan |
+| **Serverless Backend**| [Google Apps Script (GAS)](https://developers.google.com/apps-script) | Proxy gọi Gemini AI & Ghi nhận Feedback vào Google Sheets |
 | **Spaced Repetition**| FSRS Engine v4.5 | Thuật toán tính toán chu kỳ ôn tập ngắt quãng |
-| **Bảo mật** | `expo-secure-store` | Mã hóa và lưu trữ Gemini API key |
+| **Bảo mật** | `expo-secure-store` | Mã hóa và lưu trữ khóa bảo mật thiết bị |
 | **Cảm giác & Hoạt họa**| `expo-haptics` + `react-native-reanimated` | Phản hồi rung vật lý và chuyển cảnh mượt mà 60fps |
 | **Validation** | [Zod](https://zod.dev/) | Kiểm tra và chuẩn hóa schema dữ liệu |
-| **AI Integration** | Google Gemini API (Flash 1.5 / 2.5) | Trợ giảng thông minh phân tích câu & ngữ pháp |
+| **AI Integration** | Google Gemini API (Flash 1.5) via GAS | Trợ giảng thông minh phân tích câu & ngữ pháp |
 
 ---
 
@@ -144,6 +153,10 @@ japanese-study/
 │   ├── (tabs)/                 # 6 Màn hình Tab chính
 │   ├── lesson/[lessonId].tsx   # Màn hình học bài tương tác
 │   └── pitch/[itemId].tsx      # Màn hình luyện Pitch Accent & Shadowing
+│
+├── gas/                        # Google Apps Script Serverless Backend
+│   ├── Code.js                 # Router doPost/doGet, Gemini Proxy, Sheets Feedback Logger
+│   └── README.md               # Hướng dẫn Deploy Web App & Cài đặt Script Properties
 │
 ├── prisma/
 │   └── schema.prisma           # 17 models cơ sở dữ liệu SQLite local
@@ -161,8 +174,13 @@ japanese-study/
 │   ├── db/seed/                # Dữ liệu mẫu chuẩn N5
 │   │   └── n5Data.ts           # Giáo trình N5: Ngữ pháp, Kanji, Pitch, Quests, SRS Cards
 │   │
-│   ├── services/               # Các dịch vụ ngoại vi & bảo mật
-│   │   ├── ai/gemini.ts        # Gemini AI client với JSON Contract validation
+│   ├── services/               # Các dịch vụ ngoại vi, cloud & bảo mật
+│   │   ├── api/gasClient.ts    # Client kết nối Google Apps Script Web App
+│   │   ├── ai/gemini.ts        # Gemini AI service qua GAS Proxy + Local fallback
+│   │   ├── feedback/feedbackService.ts # Gửi góp ý & báo lỗi vào Google Sheets
+│   │   ├── analytics/sessionSummaryService.ts # Ghi log tóm tắt phiên học vào Sheets
+│   │   ├── firebase/firebaseConfig.ts # Cấu hình Firebase SDK (Project study-2cf98)
+│   │   ├── sync/syncService.ts # Local-first Cloud Firestore Sync Engine
 │   │   ├── storage/secureStore.ts # Quản lý khóa bí mật qua Expo SecureStore
 │   │   ├── haptics/hapticService.ts # Service rung phản hồi vật lý
 │   │   └── vocabulary/jlptVocabApi.ts # Adapter kết nối JLPT Vocab API chuẩn hóa
@@ -171,7 +189,7 @@ japanese-study/
 │   │   ├── RootStore.ts        # Khởi tạo và liên kết các feature stores
 │   │   ├── SettingsStore.ts    # Cài đặt hiển thị (Furigana, Romaji, Haptics, Gemini Key)
 │   │   ├── ProgressStore.ts    # Streak, XP, Nhiệm vụ ngày (Daily Quests), Lịch Heatmap
-│   │   ├── ReviewStore.ts      # Quản lý hàng đợi ôn tập SRS và Undo
+│   │   ├── ReviewStore.ts      # Quản lý hàng đợi ôn tập SRS, Undo và Session Summary
 │   │   ├── VocabularyStore.ts  # Quản lý phiên học từ vựng JLPT N5→N1
 │   │   ├── NotebookStore.ts    # Quản lý câu đào (Sentence Mine) và thẻ Cloze
 │   │   ├── AiStore.ts          # Điều phối câu hỏi và phản hồi từ Gemini AI
@@ -183,10 +201,14 @@ japanese-study/
 │       ├── GrammarBlock.tsx         # Khối công thức ngữ pháp kiểu Lego
 │       ├── KanjiCanvas.tsx          # Phân rã bộ thủ & Lưới chữ Mễ (米)
 │       ├── SrsReviewCard.tsx        # Thẻ Flashcard FSRS + Nút Undo
+│       ├── FeedbackModal.tsx        # Modal gửi góp ý về Google Sheets
 │       ├── StreakHeatmap.tsx        # Biểu đồ chuỗi ngày học
 │       ├── DailyQuestCard.tsx       # 3 nhiệm vụ ngày
 │       └── AiTutorBottomSheet.tsx   # Khung trượt phản hồi AI
 │
+├── firestore.rules             # Quy tắc bảo mật Cloud Firestore users/{userId}
+├── firebase.json               # Cấu hình deploy Firestore
+├── KE_HOACH_GOOGLE_APPS_SCRIPT.md # Kế hoạch tích hợp Google Apps Script & Firebase
 ├── KE_HOACH_APP_HOC_TIENG_NHAT.md # Kế hoạch sản phẩm & tài liệu kỹ thuật tổng thể
 ├── THIET_KE_UI_UX.md              # Đặc tả thiết kế UI/UX, Wireframes & Design System
 └── package.json                   # Cấu hình dự án & dependencies
@@ -216,7 +238,13 @@ japanese-study/
    npm install
    ```
 
-3. **Khởi chạy máy chủ phát triển Expo (Metro Bundler):**
+3. **Cấu hình biến môi trường (Tùy chọn):**
+   Tạo file `.env` nếu bạn muốn kết nối Google Apps Script Web App của riêng bạn:
+   ```env
+   EXPO_PUBLIC_GAS_API_URL=https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec
+   ```
+
+4. **Khởi chạy máy chủ phát triển Expo (Metro Bundler):**
    ```bash
    npx expo start
    ```
@@ -242,8 +270,8 @@ japanese-study/
 ## 🔒 8. Bảo mật & Quyền riêng tư (Security & Privacy)
 
 - **Offline-First:** Tất cả dữ liệu học tập cá nhân, tiến độ, ghi chú, câu mine và lịch sử ôn tập đều được lưu trữ **100% cục bộ trên thiết bị của bạn** bằng SQLite.
-- **Không lưu trữ API Key lộ thiên:** Khóa Gemini API do bạn nhập được lưu trữ trong phân vùng bộ nhớ bảo mật phần cứng (`Keychain` trên iOS và `Keystore` trên Android) thông qua thư viện `expo-secure-store`.
-- **Không tự động gửi dữ liệu:** Chỉ khi bạn chủ động bấm nút *"Hỏi AI"* hoặc *"Chấm bài"*, nội dung của câu đó mới được gửi tới Google Gemini API để xử lý.
+- **Không lưu trữ API Key lộ thiên:** Nhờ có Google Apps Script Proxy, Gemini API key được lưu trong Script Properties trên đám mây của Google, không đóng gói trong app binary.
+- **Cloud Sync phân quyền riêng biệt:** Quy tắc `firestore.rules` đảm bảo chỉ tài khoản sở hữu mới có quyền đọc/ghi dữ liệu của chính mình (`request.auth.uid == userId`).
 
 ---
 
