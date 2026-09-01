@@ -257,7 +257,9 @@ export default observer(function UnitQuizScreen() {
         <Card style={[styles.questionCard, { backgroundColor: theme.bgSurface, borderColor: theme.borderSubtle }]} variant="elevated">
           <Badge
             label={
-              currentQ.type === 'multiple-choice'
+              unitId === 'kana-quiz'
+                ? 'KIỂM TRA BẢNG CHỮ CÁI'
+                : currentQ.type === 'multiple-choice'
                 ? 'TRẮC NGHIỆM NGỮ PHÁP'
                 : currentQ.type === 'fill-in-blank'
                 ? 'ĐIỀN KHUYẾT TRỢ TỪ'

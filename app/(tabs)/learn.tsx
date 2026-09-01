@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -29,6 +30,13 @@ export default observer(function LearnScreen() {
   const router = useRouter();
   const settings = useSettingsStore();
   const theme = settings?.currentTheme || colors.dark;
+  const { width: windowWidth } = useWindowDimensions();
+
+  // Tính toán kích thước ô chữ Kana 5 cột chuẩn xác theo mọi kích thước màn hình
+  const KANA_GAP = 8;
+  const PADDING_HORIZONTAL = 32; // padding 16 * 2
+  const availableGridWidth = Math.max(300, windowWidth - PADDING_HORIZONTAL);
+  const kanaCardWidth = Math.floor((availableGridWidth - KANA_GAP * 4) / 5);
 
   const [selectedLevelId, setSelectedLevelId] = useState<'intro' | 'n5' | 'n4' | 'n3' | 'n2'>('intro');
   const [units, setUnits] = useState<UnitData[]>([]);
@@ -268,7 +276,7 @@ export default observer(function LearnScreen() {
             </ScrollView>
 
             {/* Lưới các thẻ chữ Kana (5 cột chuẩn) */}
-            <View style={styles.kanaGrid}>
+            <View style={[styles.kanaGrid, { gap: KANA_GAP }]}>
               {displayedKana.map((item) => {
                 const isSelected = activeKana?.id === item.id;
                 return (
@@ -281,7 +289,11 @@ export default observer(function LearnScreen() {
                     }}
                     style={[
                       styles.kanaCard,
-                      { backgroundColor: theme.bgSurface, borderColor: theme.borderSubtle },
+                      {
+                        width: kanaCardWidth,
+                        backgroundColor: theme.bgSurface,
+                        borderColor: theme.borderSubtle,
+                      },
                       isSelected && { borderColor: theme.accent, backgroundColor: theme.accentBg },
                     ]}
                   >
@@ -687,19 +699,18 @@ const styles = StyleSheet.create({
   kanaGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
+    gap: 8,
     marginTop: 6,
   },
   kanaCard: {
-    width: '18%',
-    aspectRatio: 0.85,
+    aspectRatio: 0.82,
     backgroundColor: colors.dark.bgSurface,
     borderRadius: 14,
     borderWidth: 1.5,
     borderColor: colors.dark.borderSubtle,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 4,
+    padding: 2,
   },
   kanaCardSelected: {
     borderColor: colors.accent,
