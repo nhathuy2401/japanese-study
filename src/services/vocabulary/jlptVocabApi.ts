@@ -4,22 +4,36 @@ export const JLPT_VOCAB_API_URL = 'https://jlpt-vocab-api.vercel.app';
 
 export type JlptLevel = 1 | 2 | 3 | 4 | 5;
 
-const vocabularyWordSchema = z.object({
-  word: z.string().min(1),
-  meaning: z.string().min(1),
-  furigana: z.string().min(1),
-  romaji: z.string().min(1),
-  level: z.number().int().min(1).max(5),
-});
+const rawVocabularyWordSchema = z
+  .object({
+    word: z.string().default(''),
+    meaning: z.string().default(''),
+    furigana: z.string().nullish().default(''),
+    romaji: z.string().nullish().default(''),
+    level: z.coerce.number().int().min(1).max(5),
+  })
+  .transform((w) => {
+    const trimmedWord = w.word.trim();
+    const trimmedFurigana = (w.furigana ?? '').trim();
+    return {
+      word: trimmedWord,
+      meaning: w.meaning.trim(),
+      // Với các từ Katakana hoặc Hiragana thuần túy, API trả về furigana: ""
+      // Fallback về chính từ đó để giao diện luôn hiển thị cách đọc chuẩn xác
+      furigana: trimmedFurigana || trimmedWord,
+      romaji: (w.romaji ?? '').trim(),
+      level: w.level as JlptLevel,
+    };
+  });
 
 const vocabularyResponseSchema = z.object({
-  total: z.number().int().nonnegative(),
-  offset: z.number().int().nonnegative(),
-  limit: z.number().int().positive(),
-  words: z.array(vocabularyWordSchema),
+  total: z.coerce.number().int().nonnegative().default(0),
+  offset: z.coerce.number().int().nonnegative().default(0),
+  limit: z.coerce.number().int().positive().default(20),
+  words: z.array(rawVocabularyWordSchema).default([]),
 });
 
-export type VocabularyWord = z.infer<typeof vocabularyWordSchema>;
+export type VocabularyWord = z.infer<typeof rawVocabularyWordSchema>;
 
 export interface VocabularyResponse {
   total: number;
@@ -42,7 +56,7 @@ export class VocabularyApiError extends Error {
   }
 }
 
-async function fetchJson(path: string, timeoutMs = 12_000): Promise<unknown> {
+async function fetchJson(path: string, timeoutMs = 15_000): Promise<unknown> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -53,16 +67,16 @@ async function fetchJson(path: string, timeoutMs = 12_000): Promise<unknown> {
     });
 
     if (!response.ok) {
-      throw new VocabularyApiError(`Vocabulary API trả về lỗi ${response.status}.`);
+      throw new VocabularyApiError(`Vocabulary API trả về lỗi HTTP ${response.status}.`);
     }
 
     return await response.json();
   } catch (error) {
     if (error instanceof VocabularyApiError) throw error;
     if (error instanceof Error && error.name === 'AbortError') {
-      throw new VocabularyApiError('Vocabulary API phản hồi quá lâu. Hãy thử lại.');
+      throw new VocabularyApiError('Vocabulary API phản hồi quá lâu. Vui lòng thử lại.');
     }
-    throw new VocabularyApiError('Không thể kết nối Vocabulary API.', error);
+    throw new VocabularyApiError('Không thể kết nối tới Vocabulary API. Kiểm tra kết nối mạng.', error);
   } finally {
     clearTimeout(timeoutId);
   }
@@ -87,10 +101,10 @@ export const jlptVocabApi = {
     const parsed = vocabularyResponseSchema.safeParse(payload);
 
     if (!parsed.success) {
+      console.warn('[jlptVocabApi] Schema parse error:', parsed.error);
       throw new VocabularyApiError('Dữ liệu từ Vocabulary API không đúng định dạng mong đợi.');
     }
 
     return parsed.data;
   },
 };
-
