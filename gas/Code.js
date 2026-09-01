@@ -13,7 +13,13 @@
  * - FEEDBACK_SHEET_ID: (Optional) Google Spreadsheet ID for logging
  */
 
-const GEMINI_MODEL = 'gemini-1.5-flash';
+const CANDIDATE_MODELS = [
+  'gemini-2.0-flash',
+  'gemini-2.5-flash',
+  'gemini-1.5-flash-latest',
+  'gemini-1.5-flash',
+  'gemini-pro',
+];
 
 // Router for GET requests
 function doGet(e) {
@@ -44,7 +50,6 @@ function doPost(e) {
     // 1. Verify shared secret if configured
     const expectedSecret = PropertiesService.getScriptProperties().getProperty('APP_SHARED_SECRET');
     if (expectedSecret && payload.sharedSecret !== expectedSecret) {
-      // Allow if request has valid structure but log warning
       console.warn('Request without valid sharedSecret, requestId:', payload.requestId);
     }
 
@@ -149,45 +154,55 @@ Trả về đúng định dạng JSON:
 }
 
 function callGeminiApi(apiKey, userPrompt) {
-  const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + GEMINI_MODEL + ':generateContent?key=' + apiKey;
-  
-  const requestBody = {
-    contents: [
-      {
-        role: 'user',
-        parts: [{ text: userPrompt }]
+  let lastError = null;
+
+  for (let i = 0; i < CANDIDATE_MODELS.length; i++) {
+    const model = CANDIDATE_MODELS[i];
+    const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + apiKey;
+
+    const requestBody = {
+      contents: [
+        {
+          role: 'user',
+          parts: [{ text: userPrompt }]
+        }
+      ],
+      generationConfig: {
+        responseMimeType: 'application/json',
+        temperature: 0.3,
       }
-    ],
-    generationConfig: {
-      responseMimeType: 'application/json',
-      temperature: 0.3,
+    };
+
+    const options = {
+      method: 'post',
+      contentType: 'application/json',
+      payload: JSON.stringify(requestBody),
+      muteHttpExceptions: true,
+    };
+
+    try {
+      const response = UrlFetchApp.fetch(url, options);
+      const statusCode = response.getResponseCode();
+      const responseText = response.getContentText();
+
+      if (statusCode === 200) {
+        const json = JSON.parse(responseText);
+        const rawContent = json.candidates && json.candidates[0] && json.candidates[0].content && json.candidates[0].content.parts && json.candidates[0].content.parts[0] && json.candidates[0].content.parts[0].text;
+        
+        if (rawContent) {
+          return JSON.parse(rawContent);
+        }
+      } else {
+        console.warn('Model ' + model + ' failed with status ' + statusCode + ': ' + responseText);
+        lastError = new Error('Gemini API (' + model + ') trả về lỗi HTTP ' + statusCode);
+      }
+    } catch (err) {
+      console.warn('UrlFetchApp error on model ' + model + ':', err.message);
+      lastError = err;
     }
-  };
-
-  const options = {
-    method: 'post',
-    contentType: 'application/json',
-    payload: JSON.stringify(requestBody),
-    muteHttpExceptions: true,
-  };
-
-  const response = UrlFetchApp.fetch(url, options);
-  const statusCode = response.getResponseCode();
-  const responseText = response.getContentText();
-
-  if (statusCode !== 200) {
-    console.error('Gemini API Error:', statusCode, responseText);
-    throw new Error('Gemini API trả về lỗi HTTP ' + statusCode);
   }
 
-  const json = JSON.parse(responseText);
-  const rawContent = json.candidates && json.candidates[0] && json.candidates[0].content && json.candidates[0].content.parts && json.candidates[0].content.parts[0] && json.candidates[0].content.parts[0].text;
-  
-  if (!rawContent) {
-    throw new Error('Không nhận được nội dung từ Gemini');
-  }
-
-  return JSON.parse(rawContent);
+  throw lastError || new Error('Không thể kết nối đến bất kỳ model Gemini nào.');
 }
 
 // ---------------------------------------------------------------------------
@@ -260,7 +275,6 @@ function getOrCreateSheet(sheetName, defaultHeaders) {
     if (sheetId) {
       spreadsheet = SpreadsheetApp.openById(sheetId);
     } else {
-      // Default to active spreadsheet if bound, or return null
       spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
     }
 
@@ -293,4 +307,3 @@ function createErrorResponse(message, statusCode) {
     status: statusCode || 500,
   })).setMimeType(ContentService.MimeType.JSON);
 }
-
