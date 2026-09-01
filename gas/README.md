@@ -53,6 +53,21 @@ Trong giao diện Google Apps Script:
    ```
 2. Khởi động lại Expo (`npx expo start -c`) để nhận cấu hình mới.
 
+## 📚 Nghĩa tiếng Việt cho từ vựng (Việt Sub)
+
+Ứng dụng hiện được trang bị sẵn **8,385 từ vựng JLPT (N5 - N1)** đã được gắn nghĩa **Thuần Việt** tự nhiên (không dùng âm Hán-Việt khô cứng).
+
+### Cách đưa kho dữ liệu Subtitles vào dự án Google Apps Script của bạn:
+1. Mở dự án Apps Script tại link: [Google Apps Script Project](https://script.google.com/u/1/home/projects/1sEZq5gxS0PAqKF_-Onsk4pcRlUWvOVxAnGcOmd8hfNGpjWGnE3ORvpwy/edit).
+2. Ở cột bên trái cạnh chữ **Tệp (Files)**, nhấn vào biểu tượng **Dấu cộng `+`** ➔ Chọn **Tập lệnh (Script)**.
+3. Đặt tên file là `VocabularySubtitles` (sẽ tạo thành `VocabularySubtitles.gs`).
+4. Copy toàn bộ nội dung file [`gas/VocabularySubtitles.js`](file:///Users/ccvn/Desktop/japanese-study/gas/VocabularySubtitles.js) trong dự án và dán vào.
+5. Cập nhật lại file `Code.gs` từ [`gas/Code.js`](file:///Users/ccvn/Desktop/japanese-study/gas/Code.js) rồi nhấn **Lưu (Save 💾)**.
+6. Vào **Deploy ➔ Manage deployments ➔ Edit ➔ Chọn New version ➔ Bấm Deploy**.
+
+- Ứng dụng mobile đã nạp sẵn file offline `src/data/generated/vocabulary_viet_sub.json` nên sẽ hiển thị nghĩa tiếng Việt ngay lập tức (0ms).
+- Khi có từ mới ngoài kho, app sẽ tự động gửi request đến endpoint `/ai/vocabulary-translation` của Google Apps Script để dịch bổ sung.
+
 ---
 
 ## 🧪 Kiểm tra Endpoint (Health Check)
@@ -67,4 +82,3 @@ Kết quả trả về:
   "service": "nihongo-local-gas"
 }
 ```
-

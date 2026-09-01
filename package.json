@@ -8,6 +8,7 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "test": "jest",
+    "validate:kanji": "node scripts/validateKanjiVietnamese.js",
     "prisma:generate": "prisma generate"
   },
   "dependencies": {

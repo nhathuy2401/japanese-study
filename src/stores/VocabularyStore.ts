@@ -5,6 +5,7 @@ import {
   VocabularyApiError,
   VocabularyWord,
 } from '../services/vocabulary/jlptVocabApi';
+import { attachVietnameseMeanings } from '../services/vocabulary/vocabularyTranslationService';
 
 export type VocabularyRating = 'again' | 'hard' | 'known';
 
@@ -163,10 +164,11 @@ export class VocabularyStore {
         limit: DECK_SIZE,
         word: this.activeQuery || undefined,
       });
+      const words = await attachVietnameseMeanings(response.words);
 
       runInAction(() => {
         if (requestId !== this.requestId) return;
-        this.words = shuffle(response.words);
+        this.words = shuffle(words);
         this.totalAvailable = response.total;
         this.isLoading = false;
       });

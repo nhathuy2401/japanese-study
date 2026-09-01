@@ -119,8 +119,10 @@ export default observer(function VocabularyScreen() {
               <Text style={styles.furigana}>{word.furigana}</Text>
               <Text style={styles.romaji}>{word.romaji}</Text>
               <View style={styles.divider} />
-              <Text style={styles.meaningLabel}>NGHĨA TIẾNG ANH</Text>
-              <Text style={styles.meaning}>{word.meaning}</Text>
+              <Text style={styles.meaningLabel}>
+                {word.meaningVi ? 'NGHĨA TIẾNG VIỆT' : 'NGHĨA TIẾNG ANH (CHƯA DỊCH)'}
+              </Text>
+              <Text style={styles.meaning}>{word.meaningVi || word.meaning}</Text>
             </View>
           )}
         </View>
@@ -239,7 +241,7 @@ export default observer(function VocabularyScreen() {
         {renderContent()}
 
         <Text style={styles.sourceNote}>
-          Nguồn dữ liệu: jlpt-vocab-api.vercel.app · Nghĩa hiện được API cung cấp bằng tiếng Anh.
+          Nguồn từ: jlpt-vocab-api.vercel.app · Nghĩa tiếng Việt được dịch qua Google Apps Script và lưu trên thiết bị.
         </Text>
       </ScrollView>
     </SafeAreaView>
@@ -512,4 +514,3 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
-

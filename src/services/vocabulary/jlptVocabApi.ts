@@ -33,7 +33,10 @@ const vocabularyResponseSchema = z.object({
   words: z.array(rawVocabularyWordSchema).default([]),
 });
 
-export type VocabularyWord = z.infer<typeof rawVocabularyWordSchema>;
+export type VocabularyWord = z.infer<typeof rawVocabularyWordSchema> & {
+  /** Bản dịch do GAS tạo và được lưu trong bộ nhớ đệm trên thiết bị. */
+  meaningVi?: string;
+};
 
 export interface VocabularyResponse {
   total: number;

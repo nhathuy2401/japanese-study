@@ -3,9 +3,10 @@
  * 
  * Functions:
  * 1. AI Proxy: Call Google Gemini API with hidden GEMINI_API_KEY in Script Properties
- * 2. Feedback: Log user feedback into Google Sheets
- * 3. Session Summaries: Log high-level study session metrics into Google Sheets
- * 4. Health Check: Status check endpoint
+ * 2. Vocabulary Translation: Batch translate English glosses into natural Vietnamese
+ * 3. Feedback: Log user feedback into Google Sheets
+ * 4. Session Summaries: Log high-level study session metrics into Google Sheets
+ * 5. Health Check: Status check endpoint
  * 
  * Script Properties required:
  * - GEMINI_API_KEY: Your Google Gemini API Key from Google AI Studio
@@ -33,6 +34,13 @@ function doGet(e) {
       service: 'nihongo-local-gas',
       timestamp: new Date().toISOString(),
     });
+  if (path === '/vocabulary-subtitles' || path === 'vocabulary-subtitles') {
+    const word = e.parameter.word || e.parameter.q;
+    if (word && typeof lookupVocabularySubtitle === 'function') {
+      const meaningVi = lookupVocabularySubtitle(word);
+      return createJsonResponse({ ok: true, word: word, meaningVi: meaningVi });
+    }
+    return createJsonResponse({ ok: true, message: 'Vocabulary subtitles service is active' });
   }
 
   return createErrorResponse('Endpoint không hợp lệ', 404);
@@ -63,6 +71,17 @@ function doPost(e) {
       case '/ai/writing-feedback':
       case 'writing-feedback':
         return handleWritingFeedback(payload);
+
+      case '/ai/vocabulary-translation':
+      case 'vocabulary-translation':
+        return handleVocabularyTranslation(payload);
+
+      case '/vocabulary-subtitles':
+      case 'vocabulary-subtitles':
+        if (typeof handleBatchVocabularySubtitles === 'function' && Array.isArray(payload.words)) {
+          return createJsonResponse({ ok: true, subtitles: handleBatchVocabularySubtitles(payload.words) });
+        }
+        return handleVocabularyTranslation(payload);
 
       case '/feedback':
       case 'feedback':
@@ -152,6 +171,73 @@ Trả về đúng định dạng JSON:
 
   const geminiResponse = callGeminiApi(apiKey, prompt);
   return createJsonResponse(geminiResponse);
+}
+
+function handleVocabularyTranslation(payload) {
+  const rawWords = Array.isArray(payload.words) ? payload.words : [];
+  if (!rawWords.length) {
+    return createErrorResponse('Thiếu danh sách từ cần dịch', 400);
+  }
+  if (rawWords.length > 20) {
+    return createErrorResponse('Mỗi lần chỉ được dịch tối đa 20 từ', 400);
+  }
+
+  const words = rawWords.map(function(item) {
+    return {
+      id: String(item.id || '').slice(0, 300),
+      japanese: String(item.japanese || '').slice(0, 80),
+      reading: String(item.reading || '').slice(0, 120),
+      meaningEn: String(item.meaningEn || '').slice(0, 300),
+    };
+  }).filter(function(item) {
+    return item.id && item.japanese && item.meaningEn;
+  });
+
+  if (!words.length) {
+    return createErrorResponse('Dữ liệu từ vựng không hợp lệ', 400);
+  }
+
+  const apiKey = getGeminiApiKey();
+  if (!apiKey) {
+    return createErrorResponse('Chưa cấu hình GEMINI_API_KEY trong Script Properties của GAS', 500);
+  }
+
+  const prompt = `
+Bạn là biên dịch viên tiếng Nhật cho người học Việt Nam.
+Hãy dịch nghĩa từ vựng dưới đây sang tiếng Việt tự nhiên, ngắn gọn và sát ngữ cảnh học tiếng Nhật.
+Không dùng các cụm âm Hán-Việt rời rạc nếu tiếng Việt thông dụng có cách diễn đạt tự nhiên hơn.
+Hãy dựa cả vào từ tiếng Nhật và cách đọc để xử lý nghĩa tiếng Anh mơ hồ.
+Không giải thích thêm, không giữ lại nghĩa tiếng Anh.
+
+Trả về đúng JSON theo dạng:
+{
+  "translations": [
+    { "id": "id gốc", "meaningVi": "nghĩa tiếng Việt" }
+  ]
+}
+
+Mỗi id đầu vào phải xuất hiện đúng một lần. Danh sách cần dịch:
+${JSON.stringify(words)}
+`;
+
+  const geminiResponse = callGeminiApi(apiKey, prompt);
+  const translations = Array.isArray(geminiResponse.translations) ? geminiResponse.translations : null;
+  if (!translations) {
+    return createErrorResponse('Gemini trả về sai định dạng bản dịch từ vựng', 502);
+  }
+
+  const validIds = {};
+  words.forEach(function(word) { validIds[word.id] = true; });
+  const sanitized = translations.map(function(item) {
+    return {
+      id: String(item.id || ''),
+      meaningVi: String(item.meaningVi || '').trim(),
+    };
+  }).filter(function(item) {
+    return validIds[item.id] && item.meaningVi;
+  });
+
+  return createJsonResponse({ translations: sanitized });
 }
 
 function callGeminiApi(apiKey, userPrompt) {

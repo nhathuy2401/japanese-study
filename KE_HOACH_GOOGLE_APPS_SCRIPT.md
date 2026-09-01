@@ -28,6 +28,7 @@ Giữ ứng dụng **local-first**: học bài, SRS/FSRS, tiến độ, notebook
 | Đăng nhập Google | Chưa có | Firebase Authentication, Google provider | Tạo tài khoản tùy chọn để bật sao lưu/đồng bộ |
 | Đồng bộ dữ liệu học | Chỉ lưu local | Cloud Firestore: profile, settings, progress và review state | Đồng bộ đa thiết bị, vẫn giữ local-first |
 | Báo cáo học tập | Chưa có | GAS ghi summary một dòng/phiên vào Google Sheets | Dễ xem dashboard, không ảnh hưởng state học |
+| Dịch nghĩa từ vựng | API từ vựng trả nghĩa Anh | App gửi tối đa 20 gloss mới/lần tới `POST /ai/vocabulary-translation`; cache trên thiết bị | Có nghĩa Việt tự nhiên mà không biến GAS thành nguồn dữ liệu từ vựng |
 
 ## Ngoài phạm vi
 
@@ -35,7 +36,7 @@ Không chuyển các phần sau sang GAS trong giai đoạn 1:
 
 - FSRS/SRS, streak, daily quest, tiến độ học, notebook và cài đặt cá nhân.
 - Bộ dữ liệu N5 seed và màn hình học/review.
-- Tra cứu từ vựng thường xuyên. Endpoint Vercel hiện tại vẫn phù hợp hơn; GAS có quota và độ trễ không phù hợp làm API dữ liệu chính.
+- GAS không làm API dữ liệu từ vựng chính. App vẫn lấy từ/cách đọc từ endpoint Vercel; GAS chỉ dịch theo lô các gloss chưa cache để bổ sung nghĩa Việt.
 - Thanh toán, subscription, Cloud Storage, Cloud Functions, Cloud Run hay bất cứ dịch vụ nào buộc nâng cấp sang Blaze.
 - Lưu nội dung câu trả lời AI dài hạn theo người dùng.
 

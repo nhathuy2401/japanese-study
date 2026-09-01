@@ -10,6 +10,7 @@ interface KanjiCanvasProps {
 
 export const KanjiCanvas: React.FC<KanjiCanvasProps> = ({ kanji }) => {
   const [showHint, setShowHint] = useState<boolean>(true);
+  const hasVerifiedRadicals = kanji.radicals.length > 0;
 
   const toggleHint = () => {
     setShowHint((prev) => !prev);
@@ -55,18 +56,22 @@ export const KanjiCanvas: React.FC<KanjiCanvasProps> = ({ kanji }) => {
 
         {/* Radical Breakdown & Mnemonic Story */}
         <View style={styles.infoWrapper}>
-          <Text style={styles.sectionTitle}>PHÂN RÃ THÀNH PHẦN</Text>
-          <View style={styles.radicalsList}>
-            {kanji.radicals.map((rad, idx) => (
-              <View key={idx} style={styles.radicalItem}>
-                <Text style={styles.radicalSymbol}>{rad.symbol}</Text>
-                <View style={styles.radicalDetail}>
-                  <Text style={styles.radicalName}>{rad.name}</Text>
-                  <Text style={styles.radicalMeaning}>({rad.meaningVi})</Text>
-                </View>
+          {hasVerifiedRadicals ? (
+            <>
+              <Text style={styles.sectionTitle}>PHÂN RÃ THÀNH PHẦN</Text>
+              <View style={styles.radicalsList}>
+                {kanji.radicals.map((rad, idx) => (
+                  <View key={idx} style={styles.radicalItem}>
+                    <Text style={styles.radicalSymbol}>{rad.symbol}</Text>
+                    <View style={styles.radicalDetail}>
+                      <Text style={styles.radicalName}>{rad.name}</Text>
+                      <Text style={styles.radicalMeaning}>({rad.meaningVi})</Text>
+                    </View>
+                  </View>
+                ))}
               </View>
-            ))}
-          </View>
+            </>
+          ) : null}
 
           {/* Mnemonic Story */}
           {kanji.mnemonic && (
@@ -312,4 +317,3 @@ const styles = StyleSheet.create({
     color: colors.dark.textSecondary,
   },
 });
-

@@ -13,6 +13,21 @@ let ALL_LOCAL_KANJI: DomainKanji[] = [
   ...N2_KANJI_LIST,
 ];
 
+function hasEnglishMeaningLeak(kanji: DomainKanji): boolean {
+  const englishMeanings = new Set((kanji as DomainKanji & { meaningsEn?: string[] }).meaningsEn || []);
+  return kanji.meaningsVi.some((meaning) => englishMeanings.has(meaning));
+}
+
+function hasUnverifiedGeneratedRadicals(kanji: DomainKanji): boolean {
+  return kanji.radicals.some((radical) =>
+    radical.meaningVi === radical.name || radical.meaningVi === radical.symbol
+  );
+}
+
+function isSafeCloudOverride(kanji: DomainKanji): boolean {
+  return !hasEnglishMeaningLeak(kanji) && !hasUnverifiedGeneratedRadicals(kanji);
+}
+
 try {
   const generatedKanji = require('../../data/generated/all_kanji.json');
   if (Array.isArray(generatedKanji) && generatedKanji.length > 0) {
@@ -39,7 +54,11 @@ export const kanjiService = {
           const cloudKanji = snapshot.docs.map((d) => d.data() as DomainKanji);
           const map = new Map<string, DomainKanji>();
           localMatches.forEach((k) => map.set(k.character, k));
-          cloudKanji.forEach((k) => map.set(k.character, k));
+          cloudKanji.forEach((k) => {
+            // Never replace a verified local definition with older generated data
+            // that still contains English glosses or unverified radical labels.
+            if (isSafeCloudOverride(k)) map.set(k.character, k);
+          });
           return Array.from(map.values());
         }
       } catch (e) {
@@ -61,7 +80,8 @@ export const kanjiService = {
         const db = getFirestoreDb();
         const snap = await getDoc(doc(db, 'kanji_dict', idOrChar));
         if (snap.exists()) {
-          return snap.data() as DomainKanji;
+          const cloudKanji = snap.data() as DomainKanji;
+          return isSafeCloudOverride(cloudKanji) ? cloudKanji : null;
         }
       } catch (e) {
         console.warn('[kanjiService] Lỗi tải kanji từ Firestore:', e);
