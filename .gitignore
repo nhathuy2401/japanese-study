@@ -33,13 +33,15 @@ ios/Pods/
 ios/build/
 build_output/
 *.ipa
-*.xcworkspace/
-*.xcodeproj/
 xcuserdata/
+*.xcscmblueprint
+*.xccheckout
 DerivedData/
 *.mode1v3
 *.mode2v3
 *.perspectivev3
+*.xcuserstate
+project.xcworkspace/xcuserdata/
 
 # Android Native Builds & Gradle
 android/.gradle/
