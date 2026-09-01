@@ -33,6 +33,8 @@ interface CharacterWriteCardProps {
     sampleWords?: { word: string; reading: string; meaningVi: string }[];
   };
   onClose?: () => void;
+  onDrawStart?: () => void;
+  onDrawEnd?: () => void;
 }
 
 const CANVAS_SIZE = 260;
@@ -40,6 +42,8 @@ const CANVAS_SIZE = 260;
 export const CharacterWriteCard: React.FC<CharacterWriteCardProps> = ({
   character,
   onClose,
+  onDrawStart,
+  onDrawEnd,
 }) => {
   const theme = useAppTheme();
   const [strokes, setStrokes] = useState<Stroke[]>([]);
@@ -55,9 +59,14 @@ export const CharacterWriteCard: React.FC<CharacterWriteCardProps> = ({
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
+      onStartShouldSetPanResponderCapture: () => true,
       onMoveShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponderCapture: () => true,
+      onPanResponderTerminationRequest: () => false,
+      onShouldBlockNativeResponder: () => true,
       onPanResponderGrant: (evt: GestureResponderEvent) => {
         hapticService.light();
+        onDrawStart?.();
         const { locationX, locationY } = evt.nativeEvent;
         const newPoint = { x: locationX, y: locationY };
         currentStrokeRef.current = [newPoint];
@@ -70,6 +79,17 @@ export const CharacterWriteCard: React.FC<CharacterWriteCardProps> = ({
         setCurrentStroke([...currentStrokeRef.current]);
       },
       onPanResponderRelease: () => {
+        onDrawEnd?.();
+        if (currentStrokeRef.current.length > 0) {
+          const updated = [...strokesRef.current, currentStrokeRef.current];
+          strokesRef.current = updated;
+          setStrokes(updated);
+          currentStrokeRef.current = [];
+          setCurrentStroke([]);
+        }
+      },
+      onPanResponderTerminate: () => {
+        onDrawEnd?.();
         if (currentStrokeRef.current.length > 0) {
           const updated = [...strokesRef.current, currentStrokeRef.current];
           strokesRef.current = updated;

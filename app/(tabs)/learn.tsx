@@ -38,6 +38,7 @@ export default observer(function LearnScreen() {
   const [kanaType, setKanaType] = useState<'hiragana' | 'katakana'>('hiragana');
   const [selectedRow, setSelectedRow] = useState<string>('all');
   const [activeKana, setActiveKana] = useState<KanaCharacter | null>(null);
+  const [isScrollEnabled, setIsScrollEnabled] = useState<boolean>(true);
 
   useEffect(() => {
     let isMounted = true;
@@ -123,7 +124,10 @@ export default observer(function LearnScreen() {
         </ScrollView>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        scrollEnabled={isScrollEnabled}
+        contentContainerStyle={styles.scrollContent}
+      >
         {/* TAB 1: BẢNG CHỮ CÁI (KANA) DÀNH CHO NGƯỜI MỚI BẮT ĐẦU */}
         {selectedLevelId === 'intro' ? (
           <View style={styles.kanaDashboard}>
@@ -184,7 +188,6 @@ export default observer(function LearnScreen() {
                   Hiragana (Chữ mềm)
                 </Text>
               </TouchableOpacity>
-
               <TouchableOpacity
                 style={[
                   styles.typeTab,
@@ -207,7 +210,12 @@ export default observer(function LearnScreen() {
             {activeKana && (
               <CharacterWriteCard
                 character={activeKana}
-                onClose={() => setActiveKana(null)}
+                onClose={() => {
+                  setIsScrollEnabled(true);
+                  setActiveKana(null);
+                }}
+                onDrawStart={() => setIsScrollEnabled(false)}
+                onDrawEnd={() => setIsScrollEnabled(true)}
               />
             )}
 

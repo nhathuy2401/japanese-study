@@ -31,6 +31,8 @@ web-build/
 # iOS Native Builds & Xcode
 ios/Pods/
 ios/build/
+build_output/
+*.ipa
 *.xcworkspace/
 *.xcodeproj/
 xcuserdata/
