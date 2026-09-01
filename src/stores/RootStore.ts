@@ -16,7 +16,7 @@ export class RootStore {
   constructor() {
     this.settingsStore = new SettingsStore();
     this.progressStore = new ProgressStore();
-    this.reviewStore = new ReviewStore();
+    this.reviewStore = new ReviewStore(this.progressStore);
     this.notebookStore = new NotebookStore();
     this.aiStore = new AiStore();
     this.vocabularyStore = new VocabularyStore();
@@ -24,4 +24,3 @@ export class RootStore {
 }
 
 export const rootStore = new RootStore();
-

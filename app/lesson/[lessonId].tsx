@@ -72,7 +72,7 @@ export default observer(function LessonRunnerScreen() {
       setCurrentStep((prev) => prev + 1);
       hapticService.light();
     } else {
-      progressStore.recordStudySession();
+      progressStore.recordStudyActivity('lesson');
       progressStore.completeQuest('quest-1');
       hapticService.success();
       Alert.alert('Hoàn thành bài học! 🏆', 'Bạn đã hoàn tất bài học và nhận được +20 XP!', [

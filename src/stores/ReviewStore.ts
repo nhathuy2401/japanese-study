@@ -4,6 +4,7 @@ import { SEED_SRS_CARDS } from '../db/seed/n5Data';
 import { fsrs } from '../domain/srs/fsrs';
 import { hapticService } from '../services/haptics/hapticService';
 import { sessionSummaryService } from '../services/analytics/sessionSummaryService';
+import type { ProgressStore } from './ProgressStore';
 
 interface UndoHistory {
   card: SrsCardData;
@@ -16,11 +17,14 @@ export class ReviewStore {
   isFlipped: boolean = false;
   undoHistory: UndoHistory | null = null;
   isLoading: boolean = false;
+  private progressStore?: ProgressStore;
   private sessionStartTime: number = Date.now();
   private correctCount: number = 0;
   private hasLoggedSummary: boolean = false;
+  private hasRecordedStreakThisSession: boolean = false;
 
-  constructor() {
+  constructor(progressStore?: ProgressStore) {
+    this.progressStore = progressStore;
     makeAutoObservable(this, {}, { autoBind: true });
   }
 
@@ -52,6 +56,12 @@ export class ReviewStore {
   rateCard(rating: SrsRating) {
     const card = this.currentCard;
     if (!card) return;
+
+    // Ghi nhận streak activity ngay từ lần đánh giá thẻ đầu tiên
+    if (!this.hasRecordedStreakThisSession && this.progressStore) {
+      this.hasRecordedStreakThisSession = true;
+      this.progressStore.recordStudyActivity('srs');
+    }
 
     // Save for undo
     this.undoHistory = {
@@ -115,5 +125,6 @@ export class ReviewStore {
     this.sessionStartTime = Date.now();
     this.correctCount = 0;
     this.hasLoggedSummary = false;
+    this.hasRecordedStreakThisSession = false;
   }
 }

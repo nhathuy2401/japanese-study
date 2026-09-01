@@ -21,16 +21,16 @@ export interface GrammarExplainResponse {
 }
 
 const CANDIDATE_MODELS = [
-  'gemini-2.5-flash',
+  'gemini-3.6-flash',
   'gemini-2.0-flash',
   'gemini-1.5-flash-latest',
   'gemini-1.5-flash',
-  'gemini-2.5-pro',
+  'gemini-2.5-flash',
   'gemini-pro',
 ];
 
 export class GeminiService {
-  private activeModelName = 'gemini-2.0-flash';
+  private activeModelName = 'gemini-3.6-flash';
 
   async isConfigured(): Promise<boolean> {
     const gasUrl = getGasBaseUrl();
@@ -39,67 +39,75 @@ export class GeminiService {
     return !!key && key.trim().length > 0;
   }
 
-  // Tự động truy vấn danh sách models được kích hoạt cho API key này
-  private async resolveWorkingModel(apiKey: string): Promise<string> {
-    try {
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`,
-        { method: 'GET', headers: { 'Content-Type': 'application/json' } }
-      );
+  // Tự động thử qua danh sách models và ghi nhớ model hoạt động thành công
+  private async executeWithFallback(
+    apiKey: string,
+    bodyFactory: () => Record<string, any>
+  ): Promise<{ response: Response; model: string }> {
+    const modelsToTry = [
+      this.activeModelName,
+      ...CANDIDATE_MODELS.filter((m) => m !== this.activeModelName),
+    ];
 
-      if (response.ok) {
-        const data = await response.json();
-        const availableModels: string[] = (data.models || [])
-          .filter((m: any) => m.supportedGenerationMethods?.includes('generateContent'))
-          .map((m: any) => m.name.replace('models/', ''));
+    let lastErrorMsg = '';
 
-        for (const pref of CANDIDATE_MODELS) {
-          if (availableModels.includes(pref)) {
-            this.activeModelName = pref;
-            return pref;
+    for (const model of modelsToTry) {
+      try {
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(bodyFactory()),
+          }
+        );
+
+        if (response.ok) {
+          this.activeModelName = model;
+          return { response, model };
+        }
+
+        const errData = await response.json().catch(() => ({}));
+        const message: string = errData.error?.message || `HTTP ${response.status}`;
+        lastErrorMsg = message;
+
+        // Nếu Google trả về tên model gợi ý trong message (ví dụ gemini-3.6-flash)
+        const match = message.match(/models\/(gemini-[\w\.-]+)/);
+        if (match && match[1] && match[1] !== model) {
+          const suggestedModel = match[1];
+          const directRes = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${suggestedModel}:generateContent?key=${apiKey}`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(bodyFactory()),
+            }
+          );
+          if (directRes.ok) {
+            this.activeModelName = suggestedModel;
+            return { response: directRes, model: suggestedModel };
           }
         }
-
-        if (availableModels.length > 0) {
-          this.activeModelName = availableModels[0];
-          return availableModels[0];
-        }
+      } catch (e: any) {
+        lastErrorMsg = e.message;
       }
-    } catch (e) {
-      console.warn('[GeminiService] Không thể lấy danh sách models động:', e);
     }
-    return this.activeModelName;
+
+    throw new Error(lastErrorMsg || 'Không thể kết nối đến model Gemini.');
   }
 
   async testConnection(apiKey: string): Promise<{ success: boolean; message: string }> {
     try {
-      const model = await this.resolveWorkingModel(apiKey);
-
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: 'Ping test. Reply "OK".' }] }],
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        const err = await response.json();
-        return {
-          success: false,
-          message: err.error?.message || `Model ${model} trả về lỗi ${response.status}`,
-        };
-      }
+      const { model } = await this.executeWithFallback(apiKey, () => ({
+        contents: [{ parts: [{ text: 'Ping test. Reply "OK".' }] }],
+      }));
 
       return {
         success: true,
         message: `Đã kết nối thành công với ${model}! 🎉`,
       };
     } catch (e: any) {
-      return { success: false, message: e.message || 'Lỗi mạng hoặc timeout kết nối' };
+      return { success: false, message: e.message || 'Lỗi kết nối Gemini API' };
     }
   }
 
@@ -110,7 +118,7 @@ export class GeminiService {
   ): Promise<WritingFeedback> {
     const gasUrl = getGasBaseUrl();
 
-    // Ưu tiên gọi qua Google Apps Script Web App (Serverless)
+    // 1. Ưu tiên gọi qua Google Apps Script Web App (Serverless)
     if (gasUrl) {
       try {
         return await callGasApi<WritingFeedback>('/ai/writing-feedback', {
@@ -125,13 +133,11 @@ export class GeminiService {
       }
     }
 
-    // Fallback: Gọi trực tiếp bằng Gemini API key cá nhân
+    // 2. Fallback: Gọi trực tiếp bằng Gemini API key cá nhân với auto-fallback
     const apiKey = await getGeminiApiKey();
     if (!apiKey) {
       throw new Error('Chưa thiết lập URL Google Apps Script hoặc Gemini API key trong Cài đặt');
     }
-
-    const model = await this.resolveWorkingModel(apiKey);
 
     const systemPrompt = `
 Bạn là trợ giảng tiếng Nhật cho người Việt ở trình độ ${level}.
@@ -151,25 +157,10 @@ Mục tiêu ngữ pháp: ${targetGrammar}
 Câu của người học: "${sentence}"
 `;
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [
-            { role: 'user', parts: [{ text: `${systemPrompt}\n${userPrompt}` }] }
-          ],
-          generationConfig: {
-            responseMimeType: 'application/json',
-          },
-        }),
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`Gemini API Error: ${response.statusText}`);
-    }
+    const { response } = await this.executeWithFallback(apiKey, () => ({
+      contents: [{ role: 'user', parts: [{ text: `${systemPrompt}\n${userPrompt}` }] }],
+      generationConfig: { responseMimeType: 'application/json' },
+    }));
 
     const data = await response.json();
     const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
@@ -185,7 +176,7 @@ Câu của người học: "${sentence}"
   async explainGrammar(pattern: string, currentLevel: string): Promise<GrammarExplainResponse> {
     const gasUrl = getGasBaseUrl();
 
-    // Ưu tiên gọi qua Google Apps Script Web App
+    // 1. Ưu tiên gọi qua Google Apps Script Web App
     if (gasUrl) {
       try {
         return await callGasApi<GrammarExplainResponse>('/ai/grammar-explanation', {
@@ -199,13 +190,11 @@ Câu của người học: "${sentence}"
       }
     }
 
-    // Fallback: Gọi trực tiếp bằng Gemini API key cá nhân
+    // 2. Fallback: Gọi trực tiếp bằng Gemini API key cá nhân với auto-fallback
     const apiKey = await getGeminiApiKey();
     if (!apiKey) {
       throw new Error('Chưa thiết lập URL Google Apps Script hoặc Gemini API key');
     }
-
-    const model = await this.resolveWorkingModel(apiKey);
 
     const prompt = `
 Hãy giải thích mẫu ngữ pháp "${pattern}" (${currentLevel}) cho người Việt theo phong cách siêu dễ hiểu, trực quan.
@@ -219,17 +208,10 @@ Trả về JSON đúng format:
 }
 `;
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ role: 'user', parts: [{ text: prompt }] }],
-          generationConfig: { responseMimeType: 'application/json' },
-        }),
-      }
-    );
+    const { response } = await this.executeWithFallback(apiKey, () => ({
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      generationConfig: { responseMimeType: 'application/json' },
+    }));
 
     const data = await response.json();
     const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;

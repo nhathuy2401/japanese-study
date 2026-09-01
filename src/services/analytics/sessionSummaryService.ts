@@ -1,4 +1,5 @@
 import { callGasApi, getGasBaseUrl } from '../api/gasClient';
+import { getLocalDayKey } from '../../domain/streak/streak';
 
 export interface SessionSummaryData {
   level: string;
@@ -17,7 +18,7 @@ export const sessionSummaryService = {
       await callGasApi(
         '/analytics/session-summary',
         {
-          date: new Date().toISOString().split('T')[0],
+          date: getLocalDayKey(new Date()),
           level: data.level,
           reviewed: data.reviewed,
           correct: data.correct,
@@ -32,4 +33,3 @@ export const sessionSummaryService = {
     }
   },
 };
-

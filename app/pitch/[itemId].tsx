@@ -56,6 +56,7 @@ export default observer(function PitchLabScreen() {
 
   const handleSelfScore = (score: number) => {
     hapticService.success();
+    progress.recordStudyActivity('pitch');
     progress.completeQuest('quest-2');
     Alert.alert('Đã lưu kết quả luyện âm!', 'Bạn đã hoàn thành nhiệm vụ Shadowing hôm nay (+15 XP)!', [
       { text: 'Xong', onPress: () => router.back() },
