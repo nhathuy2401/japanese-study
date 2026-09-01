@@ -29,6 +29,16 @@ export const curriculumService = {
   },
 
   getUnitById(unitId: string): UnitData | null {
+    if (unitId === 'kana-quiz' || unitId === 'intro') {
+      return {
+        id: 'kana-quiz',
+        levelId: 'n5' as any,
+        title: 'Bài kiểm tra Bảng chữ cái (Kana Quiz)',
+        description: 'Kiểm tra nhận diện 46 chữ cái Hiragana, Katakana và phát âm Romaji',
+        sortOrder: 0,
+        lessons: [],
+      };
+    }
     for (const lvl of Object.keys(CURRICULUM_UNITS)) {
       const found = CURRICULUM_UNITS[lvl].find((u) => u.id === unitId);
       if (found) return found;

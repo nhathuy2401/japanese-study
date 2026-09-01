@@ -39,4 +39,12 @@ describe('QuizService', () => {
     expect(resultFailed.isPassed).toBe(false);
     expect(resultFailed.xpEarned).toBe(20);
   });
+
+  it('should generate kana quiz questions with 10 questions', async () => {
+    const questions = await quizService.generateUnitQuiz('kana-quiz');
+    expect(Array.isArray(questions)).toBe(true);
+    expect(questions.length).toBe(10);
+    expect(questions[0].options.length).toBe(4);
+    expect(questions[0].options.some((o) => o.isCorrect)).toBe(true);
+  });
 });

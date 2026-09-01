@@ -130,6 +130,27 @@ export default observer(function LearnScreen() {
               </Text>
             </View>
 
+            {/* Nút Bài kiểm tra Bảng chữ cái (Kana Quiz) */}
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => {
+                hapticService.medium();
+                router.push('/quiz/kana-quiz' as any);
+              }}
+              style={styles.kanaQuizBanner}
+            >
+              <View style={styles.kanaQuizLeft}>
+                <Text style={styles.kanaQuizIcon}>🎯</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.kanaQuizTitle}>Bài kiểm tra Bảng chữ cái (Kana Test)</Text>
+                  <Text style={styles.kanaQuizSubtitle}>10 câu trắc nghiệm nhận diện mặt chữ & Romaji · +30 XP</Text>
+                </View>
+              </View>
+              <View style={styles.kanaQuizBadge}>
+                <Text style={styles.kanaQuizBadgeText}>Vào thi ➔</Text>
+              </View>
+            </TouchableOpacity>
+
             {/* Type Switcher: Hiragana vs Katakana */}
             <View style={styles.kanaTypeSwitch}>
               <TouchableOpacity
@@ -661,5 +682,45 @@ const styles = StyleSheet.create({
     fontSize: 8,
     fontWeight: '700',
     color: '#64748B',
+  },
+  kanaQuizBanner: {
+    backgroundColor: 'rgba(244, 63, 94, 0.12)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(244, 63, 94, 0.35)',
+    borderRadius: 16,
+    padding: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  kanaQuizLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  kanaQuizIcon: {
+    fontSize: 24,
+  },
+  kanaQuizTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: colors.dark.textPrimary,
+  },
+  kanaQuizSubtitle: {
+    fontSize: 12,
+    color: '#94A3B8',
+    marginTop: 2,
+  },
+  kanaQuizBadge: {
+    backgroundColor: colors.accent,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 10,
+  },
+  kanaQuizBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '800',
   },
 });

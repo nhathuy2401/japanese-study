@@ -2,6 +2,7 @@ import { curriculumService } from '../curriculum/curriculumService';
 import { grammarService } from '../grammar/grammarService';
 import { kanjiService } from '../kanji/kanjiService';
 import { recordStudyActivity, INITIAL_STREAK_STATE } from '../../domain/streak/streak';
+import { HIRAGANA_CHARACTERS, KATAKANA_CHARACTERS } from '../../data/kana/kanaData';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type QuizQuestionType =
@@ -56,6 +57,10 @@ export const quizService = {
    * Sinh bộ câu hỏi Quiz thông minh cho một Unit cụ thể (5 - 7 câu hỏi)
    */
   async generateUnitQuiz(unitId: string): Promise<QuizQuestion[]> {
+    if (unitId === 'kana-quiz' || unitId === 'intro') {
+      return this.generateKanaQuiz();
+    }
+
     const unit = curriculumService.getUnitById(unitId);
     if (!unit) return [];
 
@@ -270,5 +275,117 @@ export const quizService = {
     } catch {
       return null;
     }
+  },
+
+  /**
+   * Sinh bộ câu hỏi trắc nghiệm kiểm tra Bảng chữ cái Kana (10 câu)
+   */
+  async generateKanaQuiz(): Promise<QuizQuestion[]> {
+    const questions: QuizQuestion[] = [];
+
+    // 1. Dạng 1: Nhìn Hiragana -> Chọn Romaji (4 câu)
+    const shuffledHira = shuffle(HIRAGANA_CHARACTERS);
+    shuffledHira.slice(0, 4).forEach((k, idx) => {
+      const wrongRomaji = shuffle(
+        HIRAGANA_CHARACTERS.filter((o) => o.romaji !== k.romaji).map((o) => o.romaji)
+      ).slice(0, 3);
+
+      const options: QuizOption[] = shuffle([
+        { id: 'opt-c', text: `/${k.romaji}/`, isCorrect: true },
+        { id: 'opt-w1', text: `/${wrongRomaji[0]}/`, isCorrect: false },
+        { id: 'opt-w2', text: `/${wrongRomaji[1]}/`, isCorrect: false },
+        { id: 'opt-w3', text: `/${wrongRomaji[2]}/`, isCorrect: false },
+      ]);
+
+      questions.push({
+        id: `q-kana-hira-${idx + 1}`,
+        type: 'multiple-choice',
+        prompt: `Chữ cái Hiragana sau phát âm là gì?`,
+        subPrompt: `Ký tự: 【 ${k.char} 】`,
+        options,
+        correctAnswer: `/${k.romaji}/`,
+        explanation: `Chữ Hiragana 【${k.char}】 có phiên âm Romaji là /${k.romaji}/. Mẹo nhớ: ${k.mnemonic}`,
+      });
+    });
+
+    // 2. Dạng 2: Nhìn Katakana -> Chọn Romaji (2 câu)
+    const shuffledKata = shuffle(KATAKANA_CHARACTERS);
+    shuffledKata.slice(0, 2).forEach((k, idx) => {
+      const wrongRomaji = shuffle(
+        KATAKANA_CHARACTERS.filter((o) => o.romaji !== k.romaji).map((o) => o.romaji)
+      ).slice(0, 3);
+
+      const options: QuizOption[] = shuffle([
+        { id: 'opt-c', text: `/${k.romaji}/`, isCorrect: true },
+        { id: 'opt-w1', text: `/${wrongRomaji[0]}/`, isCorrect: false },
+        { id: 'opt-w2', text: `/${wrongRomaji[1]}/`, isCorrect: false },
+        { id: 'opt-w3', text: `/${wrongRomaji[2]}/`, isCorrect: false },
+      ]);
+
+      questions.push({
+        id: `q-kana-kata-${idx + 1}`,
+        type: 'multiple-choice',
+        prompt: `Chữ cái Katakana sau phát âm là gì?`,
+        subPrompt: `Ký tự: 【 ${k.char} 】`,
+        options,
+        correctAnswer: `/${k.romaji}/`,
+        explanation: `Chữ Katakana 【${k.char}】 có phiên âm Romaji là /${k.romaji}/. Mẹo nhớ: ${k.mnemonic}`,
+      });
+    });
+
+    // 3. Dạng 3: Chuyển đổi Hiragana sang Katakana tương ứng (2 câu)
+    shuffledHira.slice(4, 6).forEach((h, idx) => {
+      const matchingKata = KATAKANA_CHARACTERS.find((k) => k.romaji === h.romaji);
+      if (matchingKata) {
+        const wrongKata = shuffle(
+          KATAKANA_CHARACTERS.filter((k) => k.romaji !== h.romaji).map((k) => k.char)
+        ).slice(0, 3);
+
+        const options: QuizOption[] = shuffle([
+          { id: 'opt-c', text: matchingKata.char, isCorrect: true },
+          { id: 'opt-w1', text: wrongKata[0], isCorrect: false },
+          { id: 'opt-w2', text: wrongKata[1], isCorrect: false },
+          { id: 'opt-w3', text: wrongKata[2], isCorrect: false },
+        ]);
+
+        questions.push({
+          id: `q-kana-convert-${idx + 1}`,
+          type: 'multiple-choice',
+          prompt: `Chữ Hiragana sau tương ứng với chữ Katakana nào?`,
+          subPrompt: `Ký tự: 【 ${h.char} 】 (Phát âm: /${h.romaji}/)`,
+          options,
+          correctAnswer: matchingKata.char,
+          explanation: `Chữ Hiragana 【${h.char}】 và Katakana 【${matchingKata.char}】 đều có cùng cách đọc là /${h.romaji}/.`,
+        });
+      }
+    });
+
+    // 4. Dạng 4: Nhận diện từ vựng đơn giản (2 câu)
+    const wordsWithKana = shuffledHira.filter((k) => k.sampleWords && k.sampleWords.length > 0);
+    wordsWithKana.slice(0, 2).forEach((k, idx) => {
+      const sw = k.sampleWords[0];
+      const otherMeanings = shuffle(
+        wordsWithKana.filter((other) => other.id !== k.id).map((other) => other.sampleWords[0].meaningVi)
+      ).slice(0, 3);
+
+      const options: QuizOption[] = shuffle([
+        { id: 'opt-c', text: sw.meaningVi, isCorrect: true },
+        { id: 'opt-w1', text: otherMeanings[0] || 'quả táo', isCorrect: false },
+        { id: 'opt-w2', text: otherMeanings[1] || 'buổi sáng', isCorrect: false },
+        { id: 'opt-w3', text: otherMeanings[2] || 'ngôi nhà', isCorrect: false },
+      ]);
+
+      questions.push({
+        id: `q-kana-word-${idx + 1}`,
+        type: 'multiple-choice',
+        prompt: `Từ vựng tiếng Nhật sau có nghĩa là gì?`,
+        subPrompt: `Từ: 【 ${sw.word} 】 (Đọc: ${sw.reading})`,
+        options,
+        correctAnswer: sw.meaningVi,
+        explanation: `Từ 【${sw.word}】 (${sw.reading}) có nghĩa là "${sw.meaningVi}".`,
+      });
+    });
+
+    return questions.slice(0, 10);
   },
 };
