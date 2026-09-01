@@ -16,13 +16,14 @@ import { Button } from '../../src/components/Button';
 import { Card } from '../../src/components/Card';
 import { FuriganaText } from '../../src/components/FuriganaText';
 import { JlptLevel } from '../../src/services/vocabulary/jlptVocabApi';
-import { useVocabularyStore } from '../../src/stores/StoreContext';
+import { useVocabularyStore, useAppTheme } from '../../src/stores/StoreContext';
 import { colors } from '../../src/theme/colors';
 
 const JLPT_LEVELS: JlptLevel[] = [5, 4, 3, 2, 1];
 
 export default observer(function VocabularyScreen() {
   const vocabularyStore = useVocabularyStore();
+  const theme = useAppTheme();
 
   useEffect(() => {
     void vocabularyStore.initialize();
@@ -36,20 +37,20 @@ export default observer(function VocabularyScreen() {
   const renderContent = () => {
     if (vocabularyStore.isLoading) {
       return (
-        <Card style={styles.stateCard}>
-          <ActivityIndicator size="large" color={colors.accent} />
-          <Text style={styles.stateTitle}>Đang chuẩn bị bộ từ N{vocabularyStore.selectedLevel}</Text>
-          <Text style={styles.stateDescription}>Dữ liệu đang được tải từ JLPT Vocabulary API.</Text>
+        <Card style={[styles.stateCard, { backgroundColor: theme.bgSurface, borderColor: theme.borderSubtle }]}>
+          <ActivityIndicator size="large" color={theme.accent} />
+          <Text style={[styles.stateTitle, { color: theme.textPrimary }]}>Đang chuẩn bị bộ từ N{vocabularyStore.selectedLevel}</Text>
+          <Text style={[styles.stateDescription, { color: theme.textSecondary }]}>Dữ liệu đang được tải từ JLPT Vocabulary API.</Text>
         </Card>
       );
     }
 
     if (vocabularyStore.errorMessage) {
       return (
-        <Card style={styles.stateCard}>
+        <Card style={[styles.stateCard, { backgroundColor: theme.bgSurface, borderColor: theme.borderSubtle }]}>
           <Text style={styles.stateEmoji}>📡</Text>
-          <Text style={styles.stateTitle}>Chưa tải được từ vựng</Text>
-          <Text style={styles.stateDescription}>{vocabularyStore.errorMessage}</Text>
+          <Text style={[styles.stateTitle, { color: theme.textPrimary }]}>Chưa tải được từ vựng</Text>
+          <Text style={[styles.stateDescription, { color: theme.textSecondary }]}>{vocabularyStore.errorMessage}</Text>
           <Button title="Thử lại" onPress={() => void vocabularyStore.retry()} style={styles.stateButton} />
         </Card>
       );
@@ -57,24 +58,24 @@ export default observer(function VocabularyScreen() {
 
     if (vocabularyStore.isSessionFinished) {
       return (
-        <Card style={styles.stateCard}>
+        <Card style={[styles.stateCard, { backgroundColor: theme.bgSurface, borderColor: theme.borderSubtle }]}>
           <Text style={styles.stateEmoji}>🎉</Text>
-          <Text style={styles.stateTitle}>Hoàn thành bộ từ!</Text>
-          <Text style={styles.stateDescription}>
+          <Text style={[styles.stateTitle, { color: theme.textPrimary }]}>Hoàn thành bộ từ!</Text>
+          <Text style={[styles.stateDescription, { color: theme.textSecondary }]}>
             Bạn đã trả lời {vocabularyStore.studiedCount} lượt · nhớ {vocabularyStore.knownCount} từ.
           </Text>
           <View style={styles.summaryRow}>
             <View style={styles.summaryItem}>
               <Text style={[styles.summaryValue, { color: colors.danger }]}>{vocabularyStore.againCount}</Text>
-              <Text style={styles.summaryLabel}>Quên</Text>
+              <Text style={[styles.summaryLabel, { color: theme.textSecondary }]}>Quên</Text>
             </View>
             <View style={styles.summaryItem}>
               <Text style={[styles.summaryValue, { color: colors.warning }]}>{vocabularyStore.hardCount}</Text>
-              <Text style={styles.summaryLabel}>Khó</Text>
+              <Text style={[styles.summaryLabel, { color: theme.textSecondary }]}>Khó</Text>
             </View>
             <View style={styles.summaryItem}>
               <Text style={[styles.summaryValue, { color: colors.success }]}>{vocabularyStore.knownCount}</Text>
-              <Text style={styles.summaryLabel}>Đã nhớ</Text>
+              <Text style={[styles.summaryLabel, { color: theme.textSecondary }]}>Đã nhớ</Text>
             </View>
           </View>
           <Button
@@ -89,10 +90,10 @@ export default observer(function VocabularyScreen() {
     const word = vocabularyStore.currentWord;
     if (!word) {
       return (
-        <Card style={styles.stateCard}>
+        <Card style={[styles.stateCard, { backgroundColor: theme.bgSurface, borderColor: theme.borderSubtle }]}>
           <Text style={styles.stateEmoji}>🔎</Text>
-          <Text style={styles.stateTitle}>Không tìm thấy từ phù hợp</Text>
-          <Text style={styles.stateDescription}>
+          <Text style={[styles.stateTitle, { color: theme.textPrimary }]}>Không tìm thấy từ phù hợp</Text>
+          <Text style={[styles.stateDescription, { color: theme.textSecondary }]}>
             Thử nhập từ tiếng Nhật khác hoặc xóa tìm kiếm để trở lại bộ từ N{vocabularyStore.selectedLevel}.
           </Text>
           {vocabularyStore.activeQuery ? (
@@ -103,10 +104,10 @@ export default observer(function VocabularyScreen() {
     }
 
     return (
-      <Card style={styles.flashcard} variant="elevated">
+      <Card style={[styles.flashcard, { backgroundColor: theme.bgSurface, borderColor: theme.borderSubtle }]} variant="elevated">
         <View style={styles.cardHeader}>
           <Badge label={`JLPT N${word.level}`} variant="purple" />
-          <Text style={styles.progressText}>
+          <Text style={[styles.progressText, { color: theme.textSecondary }]}>
             Vòng {vocabularyStore.round} · {vocabularyStore.progressLabel}
           </Text>
         </View>
@@ -120,24 +121,30 @@ export default observer(function VocabularyScreen() {
             style={styles.wordFuriganaWrapper}
           />
           {!vocabularyStore.isAnswerVisible ? (
-            <Text style={styles.prompt}>Bạn còn nhớ cách đọc và ý nghĩa của từ này không?</Text>
+            <Text style={[styles.prompt, { color: theme.textSecondary }]}>Bạn còn nhớ cách đọc và ý nghĩa của từ này không?</Text>
           ) : (
             <View style={styles.answerArea}>
-              <Text style={styles.romaji}>{word.romaji}</Text>
-              <View style={styles.divider} />
-              <Text style={styles.meaningLabel}>
+              <Text style={[styles.romaji, { color: theme.textSecondary }]}>{word.romaji}</Text>
+              <View style={[styles.divider, { backgroundColor: theme.borderSubtle }]} />
+              <Text style={[styles.meaningLabel, { color: theme.textSecondary }]}>
                 {word.meaningVi ? 'NGHĨA TIẾNG VIỆT' : 'NGHĨA TIẾNG ANH (CHƯA DỊCH)'}
               </Text>
-              <Text style={styles.meaning}>{word.meaningVi || word.meaning}</Text>
+              <Text style={[styles.meaning, { color: theme.textPrimary }]}>{word.meaningVi || word.meaning}</Text>
             </View>
           )}
         </View>
 
         {!vocabularyStore.isAnswerVisible ? (
-          <Button title="Hiện đáp án" onPress={vocabularyStore.revealAnswer} size="lg" />
+          <Button
+            title="Hiện đáp án"
+            onPress={vocabularyStore.revealAnswer}
+            size="lg"
+            variant="accent"
+            style={theme.mode === 'light' ? { backgroundColor: theme.accent } : undefined}
+          />
         ) : (
           <View>
-            <Text style={styles.ratingHint}>Bạn nhớ từ này ở mức nào?</Text>
+            <Text style={[styles.ratingHint, { color: theme.textSecondary }]}>Bạn nhớ từ này ở mức nào?</Text>
             <View style={styles.ratingRow}>
               <Button
                 title="Quên"
@@ -167,16 +174,16 @@ export default observer(function VocabularyScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.bgCanvas }]}>
       <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
           <View>
-            <Text style={styles.title}>Từ vựng JLPT</Text>
-            <Text style={styles.subtitle}>Flashcard N5 → N1</Text>
+            <Text style={[styles.title, { color: theme.textPrimary }]}>Từ vựng JLPT</Text>
+            <Text style={[styles.subtitle, { color: theme.textSecondary }]}>Flashcard N5 → N1</Text>
           </View>
-          <View style={styles.sessionCount}>
-            <Text style={styles.sessionCountValue}>{vocabularyStore.studiedCount}</Text>
-            <Text style={styles.sessionCountLabel}>lượt học</Text>
+          <View style={[styles.sessionCount, { backgroundColor: theme.bgSubtle }]}>
+            <Text style={[styles.sessionCountValue, { color: theme.accent }]}>{vocabularyStore.studiedCount}</Text>
+            <Text style={[styles.sessionCountLabel, { color: theme.textSecondary }]}>lượt học</Text>
           </View>
         </View>
 
@@ -194,9 +201,15 @@ export default observer(function VocabularyScreen() {
                 accessibilityRole="button"
                 accessibilityState={{ selected: isSelected }}
                 onPress={() => void vocabularyStore.setLevel(level)}
-                style={[styles.levelChip, isSelected && styles.levelChipSelected]}
+                style={[
+                  styles.levelChip,
+                  { backgroundColor: theme.bgSubtle, borderColor: theme.borderSubtle },
+                  isSelected && { backgroundColor: theme.accentBg, borderColor: theme.accent },
+                ]}
               >
-                <Text style={[styles.levelText, isSelected && styles.levelTextSelected]}>N{level}</Text>
+                <Text style={[styles.levelText, { color: theme.textSecondary }, isSelected && { color: theme.accent, fontWeight: '800' }]}>
+                  N{level}
+                </Text>
               </TouchableOpacity>
             );
           })}
@@ -208,11 +221,11 @@ export default observer(function VocabularyScreen() {
             onChangeText={vocabularyStore.setSearchQuery}
             onSubmitEditing={handleSearch}
             placeholder="Tìm từ tiếng Nhật, ví dụ: 夜更かし"
-            placeholderTextColor={colors.dark.textTertiary}
+            placeholderTextColor={theme.textTertiary}
             returnKeyType="search"
             autoCapitalize="none"
             autoCorrect={false}
-            style={styles.searchInput}
+            style={[styles.searchInput, { backgroundColor: theme.bgSurface, borderColor: theme.borderSubtle, color: theme.textPrimary }]}
           />
           {vocabularyStore.activeQuery ? (
             <TouchableOpacity
@@ -221,32 +234,32 @@ export default observer(function VocabularyScreen() {
               onPress={() => void vocabularyStore.clearSearch()}
               style={styles.clearButton}
             >
-              <Text style={styles.clearButtonText}>×</Text>
+              <Text style={[styles.clearButtonText, { color: theme.textSecondary }]}>×</Text>
             </TouchableOpacity>
           ) : null}
           <TouchableOpacity
             accessibilityRole="button"
             accessibilityLabel="Tìm từ vựng"
             onPress={handleSearch}
-            style={styles.searchButton}
+            style={[styles.searchButton, { backgroundColor: theme.accent }]}
           >
             <Text style={styles.searchButtonText}>Tìm</Text>
           </TouchableOpacity>
         </View>
 
         {vocabularyStore.activeQuery ? (
-          <Text style={styles.resultInfo}>
+          <Text style={[styles.resultInfo, { color: theme.textSecondary }]}>
             {vocabularyStore.totalAvailable} kết quả cho “{vocabularyStore.activeQuery}” trong N{vocabularyStore.selectedLevel}
           </Text>
         ) : (
-          <Text style={styles.resultInfo}>
+          <Text style={[styles.resultInfo, { color: theme.textSecondary }]}>
             {vocabularyStore.totalAvailable || '—'} từ có sẵn · Bộ hiện tại tối đa 20 từ
           </Text>
         )}
 
         {renderContent()}
 
-        <Text style={styles.sourceNote}>
+        <Text style={[styles.sourceNote, { color: theme.textTertiary }]}>
           Nguồn từ: jlpt-vocab-api.vercel.app · Nghĩa tiếng Việt được dịch qua Google Apps Script và lưu trên thiết bị.
         </Text>
       </ScrollView>

@@ -85,7 +85,7 @@ export const quizService = {
 
     // Nếu không tìm thấy ngữ pháp, dùng danh sách fallback
     if (grammarList.length === 0) {
-      const fallbackList = await grammarService.getGrammarPointsByLevel(unit.levelId);
+      const fallbackList = await grammarService.getGrammarByLevel(unit.levelId);
       grammarList.push(...fallbackList.slice(0, 5));
     }
 

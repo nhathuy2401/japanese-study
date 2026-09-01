@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { observer } from 'mobx-react-lite';
-import { useNotebookStore, useReviewStore } from '../../src/stores/StoreContext';
+import { useNotebookStore, useReviewStore, useAppTheme } from '../../src/stores/StoreContext';
 import { colors } from '../../src/theme/colors';
 import { Card } from '../../src/components/Card';
 import { Button } from '../../src/components/Button';
@@ -11,6 +11,7 @@ import { hapticService } from '../../src/services/haptics/hapticService';
 export default observer(function NotebookScreen() {
   const notebook = useNotebookStore();
   const review = useReviewStore();
+  const theme = useAppTheme();
 
   const [inputJp, setInputJp] = useState('');
   const [inputVi, setInputVi] = useState('');
@@ -34,54 +35,55 @@ export default observer(function NotebookScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.bgCanvas }]}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Header */}
         <View style={styles.header}>
           <View>
-            <Text style={styles.headerTitle}>SỔ TAY & SENTENCE MINING</Text>
-            <Text style={styles.headerSubtitle}>
+            <Text style={[styles.headerTitle, { color: theme.textPrimary }]}>SỔ TAY & SENTENCE MINING</Text>
+            <Text style={[styles.headerSubtitle, { color: theme.textSecondary }]}>
               Lưu trữ câu đời thực từ Manga, Anime, Tin tức và tạo thẻ SRS 1-chạm
             </Text>
           </View>
           <TouchableOpacity
-            style={styles.addToggleBtn}
+            style={[styles.addToggleBtn, { backgroundColor: theme.accentBg, borderColor: theme.accent }]}
             onPress={() => setIsAdding((prev) => !prev)}
           >
-            <Text style={styles.addToggleText}>{isAdding ? '✕ Đóng' : '➕ Thêm câu'}</Text>
+            <Text style={[styles.addToggleText, { color: theme.accent }]}>{isAdding ? '✕ Đóng' : '➕ Thêm câu'}</Text>
           </TouchableOpacity>
         </View>
 
         {/* Add New Sentence Form */}
         {isAdding && (
-          <Card style={styles.addCard}>
-            <Text style={styles.formTitle}>ĐÀO CÂU MỚI (SENTENCE MINE)</Text>
+          <Card style={[styles.addCard, { backgroundColor: theme.bgSurface, borderColor: theme.borderSubtle }]}>
+            <Text style={[styles.formTitle, { color: theme.textPrimary }]}>ĐÀO CÂU MỚI (SENTENCE MINE)</Text>
             <TextInput
               placeholder="Nhập câu tiếng Nhật (vd: そんなつもりじゃなかったのに...)"
-              placeholderTextColor="#64748B"
+              placeholderTextColor={theme.textTertiary}
               value={inputJp}
               onChangeText={setInputJp}
-              style={styles.textInput}
+              style={[styles.textInput, { backgroundColor: theme.bgSubtle, borderColor: theme.borderSubtle, color: theme.textPrimary }]}
             />
             <TextInput
               placeholder="Nghĩa tiếng Việt (vd: Tôi không hề có ý đó...)"
-              placeholderTextColor="#64748B"
+              placeholderTextColor={theme.textTertiary}
               value={inputVi}
               onChangeText={setInputVi}
-              style={styles.textInput}
+              style={[styles.textInput, { backgroundColor: theme.bgSubtle, borderColor: theme.borderSubtle, color: theme.textPrimary }]}
             />
             <Button
               title="💾 Lưu câu vào Sổ tay"
               variant="accent"
               onPress={handleSaveNewSentence}
+              style={theme.mode === 'light' ? { backgroundColor: theme.accent } : undefined}
             />
           </Card>
         )}
 
         {/* 1-Tap Cloze Instructions */}
-        <View style={styles.tipBox}>
-          <Text style={styles.tipTitle}>💡 MẸO TẠO THẺ CLOZE (ĐIỀN TỪ) 1-CHẠM:</Text>
-          <Text style={styles.tipText}>
+        <View style={[styles.tipBox, { backgroundColor: theme.bgSubtle, borderColor: theme.borderSubtle }]}>
+          <Text style={[styles.tipTitle, { color: theme.accent }]}>💡 MẸO TẠO THẺ CLOZE (ĐIỀN TỪ) 1-CHẠM:</Text>
+          <Text style={[styles.tipText, { color: theme.textSecondary }]}>
             Chạm vào bất kỳ từ nào được gạch chân trong câu dưới đây để che từ đó thành câu đố ôn tập!
           </Text>
         </View>
@@ -91,12 +93,12 @@ export default observer(function NotebookScreen() {
           {notebook.savedSentences.map((item) => {
             const words = item.japanese.split(' ');
             return (
-              <Card key={item.id} style={styles.sentenceCard}>
+              <Card key={item.id} style={[styles.sentenceCard, { backgroundColor: theme.bgSurface, borderColor: theme.borderSubtle }]}>
                 <View style={styles.cardTopRow}>
                   <View style={styles.tagsRow}>
                     {item.tags.map((tag, idx) => (
-                      <View key={idx} style={styles.tagPill}>
-                        <Text style={styles.tagText}>{tag}</Text>
+                      <View key={idx} style={[styles.tagPill, { backgroundColor: theme.bgSubtle }]}>
+                        <Text style={[styles.tagText, { color: theme.textSecondary }]}>{tag}</Text>
                       </View>
                     ))}
                   </View>
@@ -116,9 +118,13 @@ export default observer(function NotebookScreen() {
                       <TouchableOpacity
                         key={wIdx}
                         onPress={() => handleMakeCloze(item.id, w)}
-                        style={[styles.wordPill, isClozed && styles.wordPillClozed]}
+                        style={[
+                          styles.wordPill,
+                          { backgroundColor: theme.bgSubtle, borderColor: theme.borderSubtle },
+                          isClozed && styles.wordPillClozed,
+                        ]}
                       >
-                        <Text style={[styles.wordText, isClozed && styles.wordTextClozed]}>
+                        <Text style={[styles.wordText, { color: theme.textPrimary }, isClozed && styles.wordTextClozed]}>
                           {isClozed ? '[ • • • ]' : w}
                         </Text>
                       </TouchableOpacity>
@@ -126,7 +132,7 @@ export default observer(function NotebookScreen() {
                   })}
                 </View>
 
-                <Text style={styles.sentenceVi}>💬 {item.meaningVi}</Text>
+                <Text style={[styles.sentenceVi, { color: theme.textSecondary }]}>💬 {item.meaningVi}</Text>
               </Card>
             );
           })}

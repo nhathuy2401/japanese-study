@@ -73,7 +73,8 @@ export class SyncService {
             cardRef,
             {
               id: card.id,
-              type: card.type,
+              contentType: card.contentType,
+              cardType: card.cardType,
               stability: card.stability,
               difficulty: card.difficulty,
               reps: card.reps,

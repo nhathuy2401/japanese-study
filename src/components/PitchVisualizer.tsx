@@ -2,12 +2,15 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { PitchPattern } from '../domain/entities/types';
 import { colors } from '../theme/colors';
+import { useAppTheme } from '../stores/StoreContext';
 
 interface PitchVisualizerProps {
   pattern: PitchPattern;
 }
 
 export const PitchVisualizer: React.FC<PitchVisualizerProps> = ({ pattern }) => {
+  const theme = useAppTheme();
+
   const getPitchTypeName = (type: string, pitchNum: number) => {
     switch (type) {
       case 'heiban':
@@ -24,8 +27,8 @@ export const PitchVisualizer: React.FC<PitchVisualizerProps> = ({ pattern }) => 
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.pitchTypeHeader}>
+    <View style={[styles.container, { backgroundColor: theme.bgSubtle, borderColor: theme.borderSubtle }]}>
+      <Text style={[styles.pitchTypeHeader, { color: theme.accent }]}>
         {getPitchTypeName(pattern.type, pattern.pitchNumber)}
       </Text>
 
@@ -48,7 +51,7 @@ export const PitchVisualizer: React.FC<PitchVisualizerProps> = ({ pattern }) => 
         </View>
 
         {/* Mid connector guide line */}
-        <View style={styles.guideLine} />
+        <View style={[styles.guideLine, { backgroundColor: theme.borderSubtle }]} />
 
         {/* Low Pitch Level */}
         <View style={styles.levelRow}>
@@ -67,13 +70,13 @@ export const PitchVisualizer: React.FC<PitchVisualizerProps> = ({ pattern }) => 
         </View>
 
         {/* Mora character labels below */}
-        <View style={styles.moraLabelRow}>
-          <Text style={styles.levelLabel}>Mora</Text>
+        <View style={[styles.moraLabelRow, { borderTopColor: theme.borderSubtle }]}>
+          <Text style={[styles.levelLabel, { color: theme.textSecondary }]}>Mora</Text>
           <View style={styles.moraTrack}>
             {pattern.moras.map((m, idx) => (
               <View key={`label-${idx}`} style={styles.moraSlot}>
-                <Text style={styles.moraChar}>{m.mora}</Text>
-                <Text style={styles.moraIndex}>({idx + 1})</Text>
+                <Text style={[styles.moraChar, { color: theme.textPrimary }]}>{m.mora}</Text>
+                <Text style={[styles.moraIndex, { color: theme.textTertiary }]}>({idx + 1})</Text>
               </View>
             ))}
           </View>

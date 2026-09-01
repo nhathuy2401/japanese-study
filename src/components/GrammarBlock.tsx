@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { DomainGrammarPoint } from '../domain/entities/types';
 import { colors } from '../theme/colors';
 import { Badge } from './Badge';
-import { useAiStore } from '../stores/StoreContext';
+import { useAiStore, useAppTheme } from '../stores/StoreContext';
 
 interface GrammarBlockProps {
   grammar: DomainGrammarPoint;
@@ -11,21 +11,25 @@ interface GrammarBlockProps {
 
 export const GrammarBlock: React.FC<GrammarBlockProps> = ({ grammar }) => {
   const aiStore = useAiStore();
+  const theme = useAppTheme();
 
   const handleAskAi = () => {
     aiStore.requestGrammarExplanation(grammar.pattern, grammar.levelId.toUpperCase());
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.bgSurface, borderColor: theme.borderSubtle }]}>
       {/* Header: Pattern + Meaning */}
       <View style={styles.header}>
         <View style={styles.titleArea}>
-          <Text style={styles.patternText}>{grammar.pattern}</Text>
-          <Text style={styles.meaningText}>{grammar.meaningVi}</Text>
+          <Text style={[styles.patternText, { color: theme.accent }]}>{grammar.pattern}</Text>
+          <Text style={[styles.meaningText, { color: theme.textSecondary }]}>{grammar.meaningVi}</Text>
         </View>
-        <TouchableOpacity style={styles.aiButton} onPress={handleAskAi}>
-          <Text style={styles.aiButtonText}>✨ Hỏi AI</Text>
+        <TouchableOpacity
+          style={[styles.aiButton, { backgroundColor: theme.mode === 'light' ? theme.accentBg : 'rgba(99, 102, 241, 0.15)', borderColor: theme.accent }]}
+          onPress={handleAskAi}
+        >
+          <Text style={[styles.aiButtonText, { color: theme.accent }]}>✨ Hỏi AI</Text>
         </TouchableOpacity>
       </View>
 
@@ -42,16 +46,16 @@ export const GrammarBlock: React.FC<GrammarBlockProps> = ({ grammar }) => {
       </View>
 
       {/* Lego-style Formation Rules */}
-      <View style={styles.formationBox}>
-        <Text style={styles.sectionLabel}>CÔNG THỨC KẾT NỐI (FORMATION)</Text>
+      <View style={[styles.formationBox, { backgroundColor: theme.bgSubtle }]}>
+        <Text style={[styles.sectionLabel, { color: theme.textSecondary }]}>CÔNG THỨC KẾT NỐI (FORMATION)</Text>
         <View style={styles.legoGrid}>
           {grammar.formation.map((rule, idx) => (
-            <View key={idx} style={styles.legoCard}>
-              <View style={styles.legoPill}>
-                <Text style={styles.legoPillText}>{rule.component}</Text>
+            <View key={idx} style={[styles.legoCard, { backgroundColor: theme.bgSurface, borderColor: theme.borderSubtle }]}>
+              <View style={[styles.legoPill, { backgroundColor: theme.mode === 'light' ? theme.accentBg : 'rgba(99, 102, 241, 0.15)', borderColor: theme.accent }]}>
+                <Text style={[styles.legoPillText, { color: theme.accent }]}>{rule.component}</Text>
               </View>
-              <Text style={styles.legoExplanation}>{rule.explanationVi}</Text>
-              <Text style={styles.legoExample}>Ví dụ: {rule.example}</Text>
+              <Text style={[styles.legoExplanation, { color: theme.textPrimary }]}>{rule.explanationVi}</Text>
+              <Text style={[styles.legoExample, { color: theme.textSecondary }]}>Ví dụ: {rule.example}</Text>
             </View>
           ))}
         </View>
@@ -59,10 +63,10 @@ export const GrammarBlock: React.FC<GrammarBlockProps> = ({ grammar }) => {
 
       {/* Common Mistakes Alert for Vietnamese Learners */}
       {grammar.commonMistakes && grammar.commonMistakes.length > 0 && (
-        <View style={styles.mistakeBox}>
+        <View style={[styles.mistakeBox, { backgroundColor: theme.mode === 'light' ? 'rgba(239, 68, 68, 0.08)' : 'rgba(239, 68, 68, 0.12)' }]}>
           <Text style={styles.mistakeHeader}>⚠️ LỖI NGƯỜI VIỆT THƯỜNG GẶP</Text>
           {grammar.commonMistakes.map((mistake, idx) => (
-            <Text key={idx} style={styles.mistakeText}>
+            <Text key={idx} style={[styles.mistakeText, { color: theme.textPrimary }]}>
               • {mistake}
             </Text>
           ))}

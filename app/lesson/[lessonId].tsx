@@ -11,7 +11,7 @@ import { KanjiCanvas } from '../../src/components/KanjiCanvas';
 import { Button } from '../../src/components/Button';
 import { Card } from '../../src/components/Card';
 import { hapticService } from '../../src/services/haptics/hapticService';
-import { useProgressStore } from '../../src/stores/StoreContext';
+import { useProgressStore, useAppTheme } from '../../src/stores/StoreContext';
 import { curriculumService } from '../../src/services/curriculum/curriculumService';
 import { grammarService } from '../../src/services/grammar/grammarService';
 import { kanjiService } from '../../src/services/kanji/kanjiService';
@@ -22,6 +22,7 @@ export default observer(function LessonRunnerScreen() {
   const params = useLocalSearchParams();
   const lessonId = String(params.lessonId || 'lesson-1');
   const progressStore = useProgressStore();
+  const theme = useAppTheme();
 
   const [currentStep, setCurrentStep] = useState<number>(1);
   const totalSteps = 4;
@@ -114,30 +115,30 @@ export default observer(function LessonRunnerScreen() {
 
   if (isLoadingData) {
     return (
-      <SafeAreaView style={[styles.safeArea, { justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color={colors.accent} />
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.bgCanvas, justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={theme.accent} />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.bgCanvas }]}>
       {/* Top Header & Progress Stepper */}
-      <View style={styles.topBar}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.closeBtn}>
-          <Text style={styles.closeText}>✕</Text>
+      <View style={[styles.topBar, { backgroundColor: theme.bgSurface, borderBottomColor: theme.borderSubtle }]}>
+        <TouchableOpacity onPress={() => router.back()} style={[styles.closeBtn, { backgroundColor: theme.bgSubtle }]}>
+          <Text style={[styles.closeText, { color: theme.textSecondary }]}>✕</Text>
         </TouchableOpacity>
 
-        <View style={styles.progressBarWrapper}>
+        <View style={[styles.progressBarWrapper, { backgroundColor: theme.bgSubtle }]}>
           <View
             style={[
               styles.progressBarFill,
-              { width: `${(currentStep / totalSteps) * 100}%` },
+              { width: `${(currentStep / totalSteps) * 100}%`, backgroundColor: theme.accent },
             ]}
           />
         </View>
 
-        <Text style={styles.stepText}>
+        <Text style={[styles.stepText, { color: theme.textSecondary }]}>
           {currentStep}/{totalSteps}
         </Text>
       </View>
@@ -146,7 +147,7 @@ export default observer(function LessonRunnerScreen() {
         {/* Step 1: Grammar Concept & Formula */}
         {currentStep === 1 && (
           <View style={styles.stepContainer}>
-            <Text style={styles.stepBadge}>BƯỚC 1: KIẾN THỨC CỐT LÕI</Text>
+            <Text style={[styles.stepBadge, { color: theme.accent }]}>BƯỚC 1: KIẾN THỨC CỐT LÕI</Text>
             <GrammarBlock grammar={grammar} />
           </View>
         )}
@@ -154,8 +155,8 @@ export default observer(function LessonRunnerScreen() {
         {/* Step 2: Interactive Sentences & Furigana Inspection */}
         {currentStep === 2 && (
           <View style={styles.stepContainer}>
-            <Text style={styles.stepBadge}>BƯỚC 2: CÂU VÍ DỤ TƯƠNG TÁC</Text>
-            <Text style={styles.stepInstruction}>
+            <Text style={[styles.stepBadge, { color: theme.accent }]}>BƯỚC 2: CÂU VÍ DỤ TƯƠNG TÁC</Text>
+            <Text style={[styles.stepInstruction, { color: theme.textSecondary }]}>
               Chạm vào bất kỳ từ vựng nào để xem giải thích, âm Hán Việt và cao độ:
             </Text>
             {grammar.examples.map((ex, idx) => (
@@ -173,15 +174,15 @@ export default observer(function LessonRunnerScreen() {
         {/* Step 3: Interactive Sentence Builder Quiz */}
         {currentStep === 3 && (
           <View style={styles.stepContainer}>
-            <Text style={styles.stepBadge}>BƯỚC 3: BÀI TẬP SẮP XẾP CÂU</Text>
-            <Text style={styles.quizPrompt}>
-              Dịch câu sau: <Text style={styles.quizPromptBold}>"Tôi uống nước hoa quả."</Text>
+            <Text style={[styles.stepBadge, { color: theme.accent }]}>BƯỚC 3: BÀI TẬP SẮP XẾP CÂU</Text>
+            <Text style={[styles.quizPrompt, { color: theme.textSecondary }]}>
+              Dịch câu sau: <Text style={[styles.quizPromptBold, { color: theme.textPrimary }]}>"Tôi uống nước hoa quả."</Text>
             </Text>
 
             {/* Selected Words Area (Answer Dropzone) */}
-            <View style={styles.dropZone}>
+            <View style={[styles.dropZone, { backgroundColor: theme.bgSubtle, borderColor: theme.borderSubtle }]}>
               {selectedWords.length === 0 ? (
-                <Text style={styles.dropPlaceholder}>
+                <Text style={[styles.dropPlaceholder, { color: theme.textTertiary }]}>
                   Chạm vào các từ bên dưới để đưa lên đây...
                 </Text>
               ) : (
@@ -190,9 +191,15 @@ export default observer(function LessonRunnerScreen() {
                     <TouchableOpacity
                       key={idx}
                       onPress={() => handleRemoveWord(word, idx)}
-                      style={styles.selectedPill}
+                      style={[
+                        styles.selectedPill,
+                        {
+                          backgroundColor: theme.mode === 'light' ? theme.accentBg : 'rgba(244, 63, 94, 0.2)',
+                          borderColor: theme.accent,
+                        },
+                      ]}
                     >
-                      <Text style={styles.selectedPillText}>{word}</Text>
+                      <Text style={[styles.selectedPillText, { color: theme.accent }]}>{word}</Text>
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -200,15 +207,15 @@ export default observer(function LessonRunnerScreen() {
             </View>
 
             {/* Word Bank */}
-            <Text style={styles.bankLabel}>NGÂN HÀNG TỪ VỰNG GỢI Ý:</Text>
+            <Text style={[styles.bankLabel, { color: theme.textSecondary }]}>NGÂN HÀNG TỪ VỰNG GỢI Ý:</Text>
             <View style={styles.wordsWrap}>
               {bankWords.map((word, idx) => (
                 <TouchableOpacity
                   key={idx}
                   onPress={() => handleWordSelect(word, idx)}
-                  style={styles.bankPill}
+                  style={[styles.bankPill, { backgroundColor: theme.bgSubtle, borderColor: theme.borderSubtle }]}
                 >
-                  <Text style={styles.bankPillText}>{word}</Text>
+                  <Text style={[styles.bankPillText, { color: theme.textPrimary }]}>{word}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -220,7 +227,7 @@ export default observer(function LessonRunnerScreen() {
                 variant="accent"
                 disabled={selectedWords.length === 0}
                 onPress={handleCheckAnswer}
-                style={styles.actionBtn}
+                style={[styles.actionBtn, theme.mode === 'light' && { backgroundColor: theme.accent }]}
               />
             ) : (
               <Card
@@ -244,19 +251,19 @@ export default observer(function LessonRunnerScreen() {
         {/* Step 4: Kanji Anatomy & Lesson Summary */}
         {currentStep === 4 && (
           <View style={styles.stepContainer}>
-            <Text style={styles.stepBadge}>BƯỚC 4: KANJI & TỔNG KẾT</Text>
+            <Text style={[styles.stepBadge, { color: theme.accent }]}>BƯỚC 4: KANJI & TỔNG KẾT</Text>
             <KanjiCanvas kanji={kanji} />
           </View>
         )}
       </ScrollView>
 
       {/* Bottom Floating Navigation */}
-      <View style={styles.bottomNav}>
+      <View style={[styles.bottomNav, { backgroundColor: theme.bgSurface, borderTopColor: theme.borderSubtle }]}>
         <Button
           title={currentStep === totalSteps ? '🏆 Hoàn thành bài học' : 'Tiếp tục ➔'}
           variant="primary"
           onPress={handleNextStep}
-          style={styles.nextBtn}
+          style={[styles.nextBtn, theme.mode === 'light' && { backgroundColor: theme.accent }]}
         />
       </View>
     </SafeAreaView>

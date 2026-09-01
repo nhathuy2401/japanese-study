@@ -1,12 +1,13 @@
 import React from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native';
 import { observer } from 'mobx-react-lite';
-import { useAiStore, useNotebookStore } from '../stores/StoreContext';
+import { useAiStore, useNotebookStore, useAppTheme } from '../stores/StoreContext';
 import { colors } from '../theme/colors';
 
 export const AiTutorBottomSheet: React.FC = observer(() => {
   const aiStore = useAiStore();
   const notebookStore = useNotebookStore();
+  const theme = useAppTheme();
 
   if (!aiStore.isSheetOpen) return null;
 
@@ -29,15 +30,15 @@ export const AiTutorBottomSheet: React.FC = observer(() => {
       onRequestClose={() => aiStore.closeAiSheet()}
     >
       <View style={styles.backdrop}>
-        <View style={styles.sheetContainer}>
+        <View style={[styles.sheetContainer, { backgroundColor: theme.bgSurface, borderColor: theme.borderSubtle }]}>
           {/* Header */}
-          <View style={styles.header}>
+          <View style={[styles.header, { borderBottomColor: theme.borderSubtle }]}>
             <View style={styles.titleRow}>
               <Text style={styles.robotIcon}>🤖</Text>
-              <Text style={styles.headerTitle}>TRỢ GIẢNG GEMINI AI</Text>
+              <Text style={[styles.headerTitle, { color: theme.textPrimary }]}>TRỢ GIẢNG GEMINI AI</Text>
             </View>
-            <TouchableOpacity onPress={() => aiStore.closeAiSheet()} style={styles.closeBtn}>
-              <Text style={styles.closeText}>✕</Text>
+            <TouchableOpacity onPress={() => aiStore.closeAiSheet()} style={[styles.closeBtn, { backgroundColor: theme.bgSubtle }]}>
+              <Text style={[styles.closeText, { color: theme.textSecondary }]}>✕</Text>
             </TouchableOpacity>
           </View>
 
@@ -45,8 +46,8 @@ export const AiTutorBottomSheet: React.FC = observer(() => {
             {/* Loading state */}
             {aiStore.isLoading && (
               <View style={styles.loadingBox}>
-                <ActivityIndicator size="large" color={colors.accent} />
-                <Text style={styles.loadingText}>Gemini đang phân tích câu hỏi...</Text>
+                <ActivityIndicator size="large" color={theme.accent} />
+                <Text style={[styles.loadingText, { color: theme.textSecondary }]}>Gemini đang phân tích câu hỏi...</Text>
               </View>
             )}
 
@@ -61,31 +62,34 @@ export const AiTutorBottomSheet: React.FC = observer(() => {
             {/* Grammar Explanation Response */}
             {aiStore.grammarExplanation && (
               <View style={styles.resultBox}>
-                <Text style={styles.sectionHeader}>💡 Giải thích dễ hiểu:</Text>
-                <Text style={styles.mainText}>
+                <Text style={[styles.sectionHeader, { color: theme.textSecondary }]}>💡 Giải thích dễ hiểu:</Text>
+                <Text style={[styles.mainText, { color: theme.textPrimary }]}>
                   {aiStore.grammarExplanation.simpleExplanationVi}
                 </Text>
 
-                <Text style={styles.sectionHeader}>🎯 Sắc thái đời sống:</Text>
-                <Text style={styles.nuanceText}>
+                <Text style={[styles.sectionHeader, { color: theme.textSecondary }]}>🎯 Sắc thái đời sống:</Text>
+                <Text style={[styles.nuanceText, { color: theme.textPrimary }]}>
                   {aiStore.grammarExplanation.practicalNuance}
                 </Text>
 
                 {aiStore.grammarExplanation.examples && (
                   <View style={styles.examplesContainer}>
-                    <Text style={styles.sectionHeader}>📝 Ví dụ bổ sung:</Text>
+                    <Text style={[styles.sectionHeader, { color: theme.textSecondary }]}>📝 Ví dụ bổ sung:</Text>
                     {aiStore.grammarExplanation.examples.map((ex, idx) => (
-                      <View key={idx} style={styles.exampleItem}>
-                        <Text style={styles.exampleJp}>{ex.japanese}</Text>
-                        <Text style={styles.exampleReading}>({ex.reading})</Text>
-                        <Text style={styles.exampleVi}>➔ {ex.meaningVi}</Text>
+                      <View key={idx} style={[styles.exampleItem, { backgroundColor: theme.bgSubtle, borderColor: theme.borderSubtle }]}>
+                        <Text style={[styles.exampleJp, { color: theme.textPrimary }]}>{ex.japanese}</Text>
+                        <Text style={[styles.exampleReading, { color: theme.accent }]}>({ex.reading})</Text>
+                        <Text style={[styles.exampleVi, { color: theme.textSecondary }]}>➔ {ex.meaningVi}</Text>
                       </View>
                     ))}
                   </View>
                 )}
 
-                <TouchableOpacity style={styles.saveBtn} onPress={handleSaveToNotebook}>
-                  <Text style={styles.saveBtnText}>⭐ Lưu giải thích này vào Sổ tay</Text>
+                <TouchableOpacity
+                  style={[styles.saveBtn, { backgroundColor: theme.mode === 'light' ? theme.accentBg : 'rgba(99, 102, 241, 0.15)', borderColor: theme.accent }]}
+                  onPress={handleSaveToNotebook}
+                >
+                  <Text style={[styles.saveBtnText, { color: theme.accent }]}>⭐ Lưu giải thích này vào Sổ tay</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -99,13 +103,13 @@ export const AiTutorBottomSheet: React.FC = observer(() => {
                   </Text>
                 </View>
 
-                <Text style={styles.sectionHeader}>✨ Câu chỉnh sửa tự nhiên:</Text>
-                <Text style={styles.correctedJp}>
+                <Text style={[styles.sectionHeader, { color: theme.textSecondary }]}>✨ Câu chỉnh sửa tự nhiên:</Text>
+                <Text style={[styles.correctedJp, { color: theme.accent }]}>
                   {aiStore.writingFeedback.correctedSentence}
                 </Text>
 
-                <Text style={styles.sectionHeader}>💬 Nhận xét chi tiết:</Text>
-                <Text style={styles.mainText}>
+                <Text style={[styles.sectionHeader, { color: theme.textSecondary }]}>💬 Nhận xét chi tiết:</Text>
+                <Text style={[styles.mainText, { color: theme.textPrimary }]}>
                   {aiStore.writingFeedback.explanationVi}
                 </Text>
 

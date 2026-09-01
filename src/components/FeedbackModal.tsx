@@ -12,6 +12,7 @@ import {
 import { colors } from '../theme/colors';
 import { feedbackService, FeedbackCategory } from '../services/feedback/feedbackService';
 import { Button } from './Button';
+import { useAppTheme } from '../stores/StoreContext';
 
 interface FeedbackModalProps {
   visible: boolean;
@@ -26,6 +27,7 @@ const CATEGORIES: { id: FeedbackCategory; label: string; emoji: string }[] = [
 ];
 
 export const FeedbackModal: React.FC<FeedbackModalProps> = ({ visible, onClose }) => {
+  const theme = useAppTheme();
   const [selectedCategory, setSelectedCategory] = useState<FeedbackCategory>('general');
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -62,31 +64,41 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ visible, onClose }
       onRequestClose={onClose}
     >
       <View style={styles.overlay}>
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: theme.bgSurface, borderColor: theme.borderSubtle }]}>
           <View style={styles.header}>
-            <Text style={styles.title}>Góp ý & Báo lỗi 📝</Text>
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Text style={styles.closeText}>✕</Text>
+            <Text style={[styles.title, { color: theme.textPrimary }]}>Góp ý & Báo lỗi 📝</Text>
+            <TouchableOpacity onPress={onClose} style={[styles.closeButton, { backgroundColor: theme.bgSubtle }]}>
+              <Text style={[styles.closeText, { color: theme.textSecondary }]}>✕</Text>
             </TouchableOpacity>
           </View>
 
-          <Text style={styles.description}>
+          <Text style={[styles.description, { color: theme.textSecondary }]}>
             Ý kiến của bạn sẽ được gửi trực tiếp tới bảng quản lý Google Sheets của nhà phát triển.
           </Text>
 
-          <Text style={styles.sectionLabel}>CHỦ ĐỀ</Text>
+          <Text style={[styles.sectionLabel, { color: theme.textSecondary }]}>CHỦ ĐỀ</Text>
           <View style={styles.categoriesRow}>
             {CATEGORIES.map((cat) => {
               const isSelected = cat.id === selectedCategory;
               return (
                 <TouchableOpacity
                   key={cat.id}
-                  style={[styles.categoryChip, isSelected && styles.categoryChipSelected]}
+                  style={[
+                    styles.categoryChip,
+                    { backgroundColor: theme.bgSubtle, borderColor: theme.borderSubtle },
+                    isSelected && { backgroundColor: theme.accentBg, borderColor: theme.accent },
+                  ]}
                   onPress={() => setSelectedCategory(cat.id)}
                   activeOpacity={0.7}
                 >
                   <Text style={styles.chipEmoji}>{cat.emoji}</Text>
-                  <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
+                  <Text
+                    style={[
+                      styles.chipText,
+                      { color: theme.textSecondary },
+                      isSelected && { color: theme.accent, fontWeight: '700' },
+                    ]}
+                  >
                     {cat.label}
                   </Text>
                 </TouchableOpacity>
@@ -94,13 +106,16 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ visible, onClose }
             })}
           </View>
 
-          <Text style={styles.sectionLabel}>NỘI DUNG GÓP Ý</Text>
+          <Text style={[styles.sectionLabel, { color: theme.textSecondary }]}>NỘI DUNG GÓP Ý</Text>
           <TextInput
-            style={styles.textInput}
+            style={[
+              styles.textInput,
+              { backgroundColor: theme.bgSubtle, borderColor: theme.borderSubtle, color: theme.textPrimary },
+            ]}
             multiline
             numberOfLines={4}
             placeholder="Mô tả chi tiết góp ý hoặc lỗi bạn gặp phải..."
-            placeholderTextColor={colors.dark.textTertiary}
+            placeholderTextColor={theme.textTertiary}
             value={message}
             onChangeText={setMessage}
             textAlignVertical="top"
@@ -112,12 +127,16 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ visible, onClose }
               variant="outline"
               onPress={onClose}
               style={{ flex: 1 }}
+              textStyle={theme.mode === 'light' ? { color: theme.accent } : undefined}
               disabled={isSubmitting}
             />
             <Button
               title={isSubmitting ? 'Đang gửi...' : 'Gửi góp ý'}
               onPress={handleSubmit}
-              style={{ flex: 2 }}
+              style={[
+                { flex: 2 },
+                theme.mode === 'light' && { backgroundColor: theme.accent },
+              ]}
               disabled={isSubmitting}
             />
           </View>

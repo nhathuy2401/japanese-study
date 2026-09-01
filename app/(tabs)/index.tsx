@@ -1,9 +1,9 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { observer } from 'mobx-react-lite';
-import { useProgressStore, useReviewStore } from '../../src/stores/StoreContext';
+import { useProgressStore, useReviewStore, useAppTheme } from '../../src/stores/StoreContext';
 import { colors } from '../../src/theme/colors';
 import { Card } from '../../src/components/Card';
 import { Button } from '../../src/components/Button';
@@ -14,6 +14,7 @@ export default observer(function TodayScreen() {
   const router = useRouter();
   const progress = useProgressStore();
   const review = useReviewStore();
+  const theme = useAppTheme();
 
   const handleStartLesson = () => {
     router.push('/lesson/lesson-1' as any);
@@ -28,13 +29,15 @@ export default observer(function TodayScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.bgCanvas }]}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* App Top Header */}
         <View style={styles.topHeader}>
           <View>
-            <Text style={styles.brandTitle}>NIHONGO LOCAL</Text>
-            <Text style={styles.levelSubtitle}>Trình độ: {progress.level} • Căn bản</Text>
+            <Text style={[styles.brandTitle, { color: theme.textPrimary }]}>NIHONGO LOCAL</Text>
+            <Text style={[styles.levelSubtitle, { color: theme.textSecondary }]}>
+              Trình độ: {progress.level} • Căn bản
+            </Text>
           </View>
           <View style={styles.statsRow}>
             <View style={styles.streakBadge}>
@@ -47,13 +50,21 @@ export default observer(function TodayScreen() {
         </View>
 
         {/* Continue Learning Active Lesson */}
-        <Card style={styles.continueCard}>
+        <Card
+          style={[
+            styles.continueCard,
+            {
+              backgroundColor: theme.bgSurface,
+              borderColor: theme.mode === 'light' ? theme.borderSubtle : 'rgba(244, 63, 94, 0.3)',
+            },
+          ]}
+        >
           <View style={styles.cardHeaderRow}>
-            <Text style={styles.cardBadge}>🎯 BÀI TIẾP THEO</Text>
-            <Text style={styles.estTime}>⏱️ ~10 phút</Text>
+            <Text style={[styles.cardBadge, { color: theme.accent }]}>🎯 BÀI TIẾP THEO</Text>
+            <Text style={[styles.estTime, { color: theme.textSecondary }]}>⏱️ ~10 phút</Text>
           </View>
-          <Text style={styles.lessonTitle}>{progress.currentLessonTitle}</Text>
-          <Text style={styles.lessonDesc}>
+          <Text style={[styles.lessonTitle, { color: theme.textPrimary }]}>{progress.currentLessonTitle}</Text>
+          <Text style={[styles.lessonDesc, { color: theme.textSecondary }]}>
             Học cách sử dụng trợ từ を để xác định đối tượng hành động và câu ví dụ đời sống.
           </Text>
           <View style={styles.lessonActions}>
@@ -61,42 +72,57 @@ export default observer(function TodayScreen() {
               title="▶ Tiếp tục học ngay"
               variant="accent"
               onPress={handleStartLesson}
-              style={styles.mainActionBtn}
+              style={[
+                styles.mainActionBtn,
+                theme.mode === 'light' && { backgroundColor: theme.accent },
+              ]}
             />
             <Button
               title="🗣️ Luyện Pitch"
               variant="outline"
               onPress={handleStartPitch}
               style={styles.secondaryActionBtn}
+              textStyle={theme.mode === 'light' ? { color: theme.accent } : undefined}
             />
           </View>
         </Card>
 
         {/* Due Cards SRS Counter */}
-        <Card style={styles.srsDueCard}>
+        <Card
+          style={[
+            styles.srsDueCard,
+            {
+              backgroundColor: theme.bgSurface,
+              borderColor: theme.borderSubtle,
+            },
+          ]}
+        >
           <View style={styles.cardHeaderRow}>
-            <Text style={styles.cardBadge}>📦 CẦN ÔN TẬP HÔM NAY (SRS DUE)</Text>
-            <Text style={styles.dueTotal}>{review.cards.length} thẻ đến hạn</Text>
+            <Text style={[styles.cardBadge, { color: theme.accent }]}>📦 CẦN ÔN TẬP HÔM NAY (SRS DUE)</Text>
+            <Text style={[styles.dueTotal, { color: theme.accent }]}>{review.cards.length} thẻ đến hạn</Text>
           </View>
           <View style={styles.srsPillsRow}>
-            <View style={[styles.srsPill, { borderColor: '#6366F1' }]}>
-              <Text style={[styles.srsPillNum, { color: '#818CF8' }]}>1</Text>
-              <Text style={styles.srsPillLabel}>Ngữ pháp</Text>
+            <View style={[styles.srsPill, { backgroundColor: theme.bgSubtle, borderColor: '#6366F1' }]}>
+              <Text style={[styles.srsPillNum, { color: '#6366F1' }]}>1</Text>
+              <Text style={[styles.srsPillLabel, { color: theme.textSecondary }]}>Ngữ pháp</Text>
             </View>
-            <View style={[styles.srsPill, { borderColor: '#F59E0B' }]}>
-              <Text style={[styles.srsPillNum, { color: '#FBBF24' }]}>1</Text>
-              <Text style={styles.srsPillLabel}>Kanji</Text>
+            <View style={[styles.srsPill, { backgroundColor: theme.bgSubtle, borderColor: '#F59E0B' }]}>
+              <Text style={[styles.srsPillNum, { color: theme.accent }]}>1</Text>
+              <Text style={[styles.srsPillLabel, { color: theme.textSecondary }]}>Kanji</Text>
             </View>
-            <View style={[styles.srsPill, { borderColor: '#10B981' }]}>
-              <Text style={[styles.srsPillNum, { color: '#34D399' }]}>1</Text>
-              <Text style={styles.srsPillLabel}>Từ vựng</Text>
+            <View style={[styles.srsPill, { backgroundColor: theme.bgSubtle, borderColor: '#10B981' }]}>
+              <Text style={[styles.srsPillNum, { color: '#10B981' }]}>1</Text>
+              <Text style={[styles.srsPillLabel, { color: theme.textSecondary }]}>Từ vựng</Text>
             </View>
           </View>
           <Button
             title="⚡ Bắt đầu phiên ôn tập SRS"
             variant="primary"
             onPress={handleStartReview}
-            style={styles.reviewBtn}
+            style={[
+              styles.reviewBtn,
+              theme.mode === 'light' && { backgroundColor: theme.accent },
+            ]}
           />
         </Card>
 
@@ -113,7 +139,6 @@ export default observer(function TodayScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.dark.bgCanvas,
   },
   scrollContent: {
     padding: 16,
@@ -128,12 +153,10 @@ const styles = StyleSheet.create({
   brandTitle: {
     fontSize: 20,
     fontWeight: '900',
-    color: colors.dark.textPrimary,
     letterSpacing: 0.5,
   },
   levelSubtitle: {
     fontSize: 12,
-    color: '#94A3B8',
     marginTop: 2,
   },
   statsRow: {
@@ -163,12 +186,10 @@ const styles = StyleSheet.create({
     color: colors.success,
   },
   continueCard: {
-    backgroundColor: '#1E293B',
     borderRadius: 20,
     padding: 18,
     marginVertical: 6,
     borderWidth: 1.5,
-    borderColor: 'rgba(244, 63, 94, 0.3)',
   },
   cardHeaderRow: {
     flexDirection: 'row',
@@ -179,22 +200,18 @@ const styles = StyleSheet.create({
   cardBadge: {
     fontSize: 11,
     fontWeight: '800',
-    color: colors.accent,
     letterSpacing: 0.5,
   },
   estTime: {
     fontSize: 12,
-    color: '#94A3B8',
   },
   lessonTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: colors.dark.textPrimary,
     marginVertical: 4,
   },
   lessonDesc: {
     fontSize: 13,
-    color: '#94A3B8',
     lineHeight: 18,
     marginBottom: 14,
   },
@@ -209,7 +226,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   srsDueCard: {
-    backgroundColor: colors.dark.bgSurface,
     borderRadius: 18,
     padding: 16,
     marginVertical: 6,
@@ -226,7 +242,6 @@ const styles = StyleSheet.create({
   },
   srsPill: {
     flex: 1,
-    backgroundColor: colors.dark.bgSubtle,
     paddingVertical: 10,
     paddingHorizontal: 8,
     borderRadius: 12,
@@ -239,11 +254,9 @@ const styles = StyleSheet.create({
   },
   srsPillLabel: {
     fontSize: 11,
-    color: '#94A3B8',
     marginTop: 2,
   },
   reviewBtn: {
     marginTop: 4,
   },
 });
-

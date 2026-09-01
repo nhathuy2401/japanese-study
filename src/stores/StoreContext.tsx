@@ -1,5 +1,6 @@
 import React, { createContext, useContext } from 'react';
 import { RootStore, rootStore } from './RootStore';
+import { colors, AppTheme } from '../theme/colors';
 
 const StoreContext = createContext<RootStore>(rootStore);
 
@@ -22,3 +23,14 @@ export const useNotebookStore = () => useStores().notebookStore;
 export const useAiStore = () => useStores().aiStore;
 export const useVocabularyStore = () => useStores().vocabularyStore;
 
+/**
+ * Hook lấy AppTheme hiện tại (Light Mode hoặc Dark Mode) và tự động phản ứng khi đổi theme
+ */
+export const useAppTheme = (): AppTheme => {
+  try {
+    const stores = useStores();
+    return stores?.settingsStore?.currentTheme || colors.dark;
+  } catch {
+    return colors.dark;
+  }
+};

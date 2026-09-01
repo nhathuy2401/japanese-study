@@ -1,16 +1,17 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { observer } from 'mobx-react-lite';
-import { useProgressStore } from '../stores/StoreContext';
+import { useProgressStore, useAppTheme } from '../stores/StoreContext';
 import { colors } from '../theme/colors';
 
 export const DailyQuestCard: React.FC = observer(() => {
   const progress = useProgressStore();
+  const theme = useAppTheme();
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.bgSurface, borderColor: theme.borderSubtle }]}>
       <View style={styles.header}>
-        <Text style={styles.title}>NHIỆM VỤ HÔM NAY (DAILY QUESTS)</Text>
+        <Text style={[styles.title, { color: theme.textSecondary }]}>NHIỆM VỤ HÔM NAY (DAILY QUESTS)</Text>
         <Text style={styles.progressCounter}>
           {progress.completedQuestsCount}/{progress.dailyQuests.length} Hoàn thành
         </Text>
@@ -22,13 +23,23 @@ export const DailyQuestCard: React.FC = observer(() => {
             key={quest.id}
             activeOpacity={0.7}
             onPress={() => progress.completeQuest(quest.id)}
-            style={[styles.questRow, quest.isCompleted && styles.questCompletedRow]}
+            style={[
+              styles.questRow,
+              { backgroundColor: theme.bgSubtle, borderColor: theme.borderSubtle },
+              quest.isCompleted && styles.questCompletedRow,
+            ]}
           >
             <View style={styles.checkCircle}>
               <Text style={styles.checkIcon}>{quest.isCompleted ? '✓' : '○'}</Text>
             </View>
             <View style={styles.questInfo}>
-              <Text style={[styles.questTitle, quest.isCompleted && styles.questTitleDone]}>
+              <Text
+                style={[
+                  styles.questTitle,
+                  { color: theme.textPrimary },
+                  quest.isCompleted && styles.questTitleDone,
+                ]}
+              >
                 {quest.title}
               </Text>
             </View>
@@ -44,11 +55,9 @@ export const DailyQuestCard: React.FC = observer(() => {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: colors.dark.bgSurface,
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: colors.dark.borderSubtle,
     marginVertical: 8,
   },
   header: {
@@ -60,7 +69,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#94A3B8',
     letterSpacing: 0.5,
   },
   progressCounter: {
@@ -74,11 +82,9 @@ const styles = StyleSheet.create({
   questRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.dark.bgSubtle,
     padding: 12,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.04)',
   },
   questCompletedRow: {
     backgroundColor: 'rgba(16, 185, 129, 0.08)',
@@ -103,22 +109,20 @@ const styles = StyleSheet.create({
   questTitle: {
     fontSize: 13,
     fontWeight: '600',
-    color: colors.dark.textPrimary,
   },
   questTitleDone: {
     color: '#64748B',
     textDecorationLine: 'line-through',
   },
   xpBadge: {
-    backgroundColor: 'rgba(245, 158, 11, 0.15)',
+    backgroundColor: 'rgba(245, 158, 11, 0.12)',
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 6,
+    borderRadius: 8,
   },
   xpText: {
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: '800',
     color: colors.warning,
   },
 });
-

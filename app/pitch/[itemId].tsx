@@ -8,12 +8,13 @@ import { PitchVisualizer } from '../../src/components/PitchVisualizer';
 import { Button } from '../../src/components/Button';
 import { Card } from '../../src/components/Card';
 import { hapticService } from '../../src/services/haptics/hapticService';
-import { useProgressStore } from '../../src/stores/StoreContext';
+import { useProgressStore, useAppTheme } from '../../src/stores/StoreContext';
 import { PitchPattern } from '../../src/domain/entities/types';
 
 export default observer(function PitchLabScreen() {
   const router = useRouter();
   const progress = useProgressStore();
+  const theme = useAppTheme();
 
   const [isPlayingNative, setIsPlayingNative] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
@@ -64,55 +65,55 @@ export default observer(function PitchLabScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.bgCanvas }]}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>LUYỆN PITCH ACCENT & SHADOWING</Text>
-          <Text style={styles.headerSubtitle}>
+          <Text style={[styles.headerTitle, { color: theme.textPrimary }]}>LUYỆN PITCH ACCENT & SHADOWING</Text>
+          <Text style={[styles.headerSubtitle, { color: theme.textSecondary }]}>
             Nghe nhịp Mora ➔ Quan sát đường cao độ ➔ Thu âm đối chiếu
           </Text>
         </View>
 
         {/* Target Sentence */}
-        <Card style={styles.targetCard}>
-          <Text style={styles.cardLabel}>CÂU MỤC TIÊU:</Text>
-          <Text style={styles.targetJp}>これ を ください。</Text>
-          <Text style={styles.targetReading}>ko-re o ku-da-sa-i (7 Moras)</Text>
-          <Text style={styles.targetVi}>💬 "Xin hãy cho tôi cái này."</Text>
+        <Card style={[styles.targetCard, { backgroundColor: theme.bgSurface, borderColor: theme.borderSubtle }]}>
+          <Text style={[styles.cardLabel, { color: theme.accent }]}>CÂU MỤC TIÊU:</Text>
+          <Text style={[styles.targetJp, { color: theme.textPrimary }]}>これ を ください。</Text>
+          <Text style={[styles.targetReading, { color: theme.textSecondary }]}>ko-re o ku-da-sa-i (7 Moras)</Text>
+          <Text style={[styles.targetVi, { color: theme.textSecondary }]}>💬 "Xin hãy cho tôi cái này."</Text>
         </Card>
 
         {/* Pitch Accent Contour Visualizer */}
-        <View style={styles.sectionBox}>
-          <Text style={styles.sectionHeader}>BIỂU ĐỒ CAO ĐỘ CHUẨN (PITCH ACCENT):</Text>
+        <View style={[styles.sectionBox, { backgroundColor: theme.bgSubtle, borderColor: theme.borderSubtle }]}>
+          <Text style={[styles.sectionHeader, { color: theme.textSecondary }]}>BIỂU ĐỒ CAO ĐỘ CHUẨN (PITCH ACCENT):</Text>
           <PitchVisualizer pattern={samplePattern} />
         </View>
 
         {/* Native Audio Controls */}
-        <Card style={styles.audioCard}>
-          <Text style={styles.sectionHeader}>AUDIO MẪU NGƯỜI BẢN XỨ:</Text>
+        <Card style={[styles.audioCard, { backgroundColor: theme.bgSurface, borderColor: theme.borderSubtle }]}>
+          <Text style={[styles.sectionHeader, { color: theme.textSecondary }]}>AUDIO MẪU NGƯỜI BẢN XỨ:</Text>
           <View style={styles.audioControlsRow}>
             <Button
               title={isPlayingNative ? '🔊 Đang phát...' : '▶ Nghe mẫu'}
               variant="accent"
               onPress={handlePlayNative}
-              style={styles.playBtn}
+              style={[styles.playBtn, theme.mode === 'light' && { backgroundColor: theme.accent }]}
             />
             <TouchableOpacity
-              style={styles.speedBtn}
+              style={[styles.speedBtn, { backgroundColor: theme.bgSubtle, borderColor: theme.borderSubtle }]}
               onPress={() => setPlaybackSpeed((prev) => (prev === 1.0 ? 0.8 : 1.0))}
             >
-              <Text style={styles.speedBtnText}>{playbackSpeed}x Tốc độ</Text>
+              <Text style={[styles.speedBtnText, { color: theme.textPrimary }]}>{playbackSpeed}x Tốc độ</Text>
             </TouchableOpacity>
           </View>
         </Card>
 
         {/* Recording Lab */}
-        <Card style={styles.recordingCard}>
-          <Text style={styles.sectionHeader}>BẢN THU ÂM CỦA BẠN:</Text>
+        <Card style={[styles.recordingCard, { backgroundColor: theme.bgSurface, borderColor: theme.borderSubtle }]}>
+          <Text style={[styles.sectionHeader, { color: theme.textSecondary }]}>BẢN THU ÂM CỦA BẠN:</Text>
 
-          <View style={styles.waveformContainer}>
-            <Text style={styles.waveformGraphic}>
+          <View style={[styles.waveformContainer, { backgroundColor: theme.bgSubtle }]}>
+            <Text style={[styles.waveformGraphic, { color: theme.accent }]}>
               {isRecording
                 ? ' ▃▅▇█▇▆▅▃ ▂▃▅▇█▇▆▅▃ (Đang thu âm...)'
                 : hasRecorded
@@ -122,40 +123,44 @@ export default observer(function PitchLabScreen() {
           </View>
 
           <TouchableOpacity
-            style={[styles.recordButton, isRecording && styles.recordButtonActive]}
+            style={[
+              styles.recordButton,
+              { backgroundColor: theme.mode === 'light' ? theme.accentBg : 'rgba(244, 63, 94, 0.15)', borderColor: theme.accent },
+              isRecording && styles.recordButtonActive,
+            ]}
             onPress={handleToggleRecord}
           >
-            <Text style={styles.recordButtonText}>
+            <Text style={[styles.recordButtonText, { color: theme.accent }]}>
               {isRecording ? '⏹ Dừng thu âm' : '🎙️ Bấm để Thu âm phát âm'}
             </Text>
           </TouchableOpacity>
 
           {hasRecorded && (
             <View style={styles.evaluationBox}>
-              <Text style={styles.evaluationHeader}>TỰ ĐÁNH GIÁ ĐỐI CHIẾU:</Text>
+              <Text style={[styles.evaluationHeader, { color: theme.textSecondary }]}>TỰ ĐÁNH GIÁ ĐỐI CHIẾU:</Text>
               <View style={styles.evalButtonsRow}>
                 <TouchableOpacity
-                  style={[styles.evalBtn, { borderColor: colors.danger }]}
+                  style={[styles.evalBtn, { backgroundColor: theme.bgSubtle, borderColor: colors.danger }]}
                   onPress={() => handleSelfScore(1)}
                 >
                   <Text style={styles.evalEmoji}>😟</Text>
-                  <Text style={styles.evalText}>Chưa giống</Text>
+                  <Text style={[styles.evalText, { color: theme.textPrimary }]}>Chưa giống</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={[styles.evalBtn, { borderColor: colors.warning }]}
+                  style={[styles.evalBtn, { backgroundColor: theme.bgSubtle, borderColor: colors.warning }]}
                   onPress={() => handleSelfScore(2)}
                 >
                   <Text style={styles.evalEmoji}>😊</Text>
-                  <Text style={styles.evalText}>Khá ổn</Text>
+                  <Text style={[styles.evalText, { color: theme.textPrimary }]}>Khá ổn</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={[styles.evalBtn, { borderColor: colors.success }]}
+                  style={[styles.evalBtn, { backgroundColor: theme.bgSubtle, borderColor: colors.success }]}
                   onPress={() => handleSelfScore(3)}
                 >
                   <Text style={styles.evalEmoji}>🌟</Text>
-                  <Text style={styles.evalText}>Rất chuẩn</Text>
+                  <Text style={[styles.evalText, { color: theme.textPrimary }]}>Rất chuẩn</Text>
                 </TouchableOpacity>
               </View>
             </View>

@@ -18,10 +18,12 @@ import { FuriganaText } from '../../src/components/FuriganaText';
 import { hapticService } from '../../src/services/haptics/hapticService';
 import { curriculumService } from '../../src/services/curriculum/curriculumService';
 import { quizService, QuizQuestion, QuizResult } from '../../src/services/quiz/quizService';
+import { useAppTheme } from '../../src/stores/StoreContext';
 
 export default observer(function UnitQuizScreen() {
   const { unitId } = useLocalSearchParams<{ unitId: string }>();
   const router = useRouter();
+  const theme = useAppTheme();
 
   const [isLoading, setIsLoading] = useState(true);
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
@@ -159,9 +161,9 @@ export default observer(function UnitQuizScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.centerContainer}>
-        <ActivityIndicator size="large" color={colors.accent} />
-        <Text style={styles.loadingText}>Đang chuẩn bị đề thi Unit...</Text>
+      <SafeAreaView style={[styles.centerContainer, { backgroundColor: theme.bgCanvas }]}>
+        <ActivityIndicator size="large" color={theme.accent} />
+        <Text style={[styles.loadingText, { color: theme.textSecondary }]}>Đang chuẩn bị đề thi Unit...</Text>
       </SafeAreaView>
     );
   }
@@ -169,14 +171,14 @@ export default observer(function UnitQuizScreen() {
   // Màn hình Kết quả (Summary Screen)
   if (quizResult) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.bgCanvas }]}>
         <ScrollView contentContainerStyle={styles.resultContainer}>
-          <Card style={styles.resultCard} variant="elevated">
+          <Card style={[styles.resultCard, { backgroundColor: theme.bgSurface, borderColor: theme.borderSubtle }]} variant="elevated">
             <Text style={styles.resultEmoji}>{quizResult.isPassed ? '🏆' : '💪'}</Text>
-            <Text style={styles.resultTitle}>
+            <Text style={[styles.resultTitle, { color: theme.textPrimary }]}>
               {quizResult.isPassed ? 'XUẤT SẮC - ĐÃ ĐẠT!' : 'CẦN CỐ GẮNG THÊM!'}
             </Text>
-            <Text style={styles.resultSubtitle}>
+            <Text style={[styles.resultSubtitle, { color: theme.textSecondary }]}>
               {quizResult.isPassed
                 ? 'Bạn đã hoàn thành xuất sắc bài kiểm tra Unit này!'
                 : 'Hãy xem lại các cấu trúc trong bài và thử sức lại nhé.'}
@@ -199,12 +201,13 @@ export default observer(function UnitQuizScreen() {
                 variant="outline"
                 onPress={handleRestartQuiz}
                 style={styles.actionButton}
+                textStyle={theme.mode === 'light' ? { color: theme.accent } : undefined}
               />
               <Button
                 title="Hoàn thành & Quay về"
                 variant="primary"
                 onPress={() => router.back()}
-                style={styles.actionButton}
+                style={[styles.actionButton, theme.mode === 'light' && { backgroundColor: theme.accent }]}
               />
             </View>
           </Card>
@@ -215,8 +218,8 @@ export default observer(function UnitQuizScreen() {
 
   if (!currentQ) {
     return (
-      <SafeAreaView style={styles.centerContainer}>
-        <Text style={styles.loadingText}>Không tìm thấy câu hỏi cho Unit này.</Text>
+      <SafeAreaView style={[styles.centerContainer, { backgroundColor: theme.bgCanvas }]}>
+        <Text style={[styles.loadingText, { color: theme.textSecondary }]}>Không tìm thấy câu hỏi cho Unit này.</Text>
         <Button title="Quay lại" onPress={() => router.back()} style={{ marginTop: 16 }} />
       </SafeAreaView>
     );
@@ -225,17 +228,17 @@ export default observer(function UnitQuizScreen() {
   const progressPercentage = ((currentIndex + 1) / questions.length) * 100;
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.bgCanvas }]}>
       {/* Top Navigation & Progress */}
       <View style={styles.topHeader}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.closeBtn}>
-          <Text style={styles.closeBtnText}>✕</Text>
+        <TouchableOpacity onPress={() => router.back()} style={[styles.closeBtn, { backgroundColor: theme.bgSubtle }]}>
+          <Text style={[styles.closeBtnText, { color: theme.textSecondary }]}>✕</Text>
         </TouchableOpacity>
         <View style={styles.headerInfo}>
-          <Text style={styles.unitBadgeText} numberOfLines={1}>
+          <Text style={[styles.unitBadgeText, { color: theme.textPrimary }]} numberOfLines={1}>
             {unit?.title || 'Bài kiểm tra Unit'}
           </Text>
-          <Text style={styles.questionCounter}>
+          <Text style={[styles.questionCounter, { color: theme.textSecondary }]}>
             Câu {currentIndex + 1} / {questions.length}
           </Text>
         </View>
@@ -245,13 +248,13 @@ export default observer(function UnitQuizScreen() {
       </View>
 
       {/* Animated Progress Bar */}
-      <View style={styles.progressBarBg}>
-        <View style={[styles.progressBarFill, { width: `${progressPercentage}%` }]} />
+      <View style={[styles.progressBarBg, { backgroundColor: theme.bgSubtle }]}>
+        <View style={[styles.progressBarFill, { width: `${progressPercentage}%`, backgroundColor: theme.accent }]} />
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Question Card */}
-        <Card style={styles.questionCard} variant="elevated">
+        <Card style={[styles.questionCard, { backgroundColor: theme.bgSurface, borderColor: theme.borderSubtle }]} variant="elevated">
           <Badge
             label={
               currentQ.type === 'multiple-choice'
@@ -266,18 +269,18 @@ export default observer(function UnitQuizScreen() {
             style={{ marginBottom: 12 }}
           />
 
-          <Text style={styles.promptText}>{currentQ.prompt}</Text>
+          <Text style={[styles.promptText, { color: theme.textPrimary }]}>{currentQ.prompt}</Text>
 
           {/* SubPrompt or Target Pattern */}
           {currentQ.subPrompt && (
-            <View style={styles.subPromptBox}>
-              <Text style={styles.subPromptText}>{currentQ.subPrompt}</Text>
+            <View style={[styles.subPromptBox, { backgroundColor: theme.bgSubtle }]}>
+              <Text style={[styles.subPromptText, { color: theme.accent }]}>{currentQ.subPrompt}</Text>
             </View>
           )}
 
           {/* Japanese Sentence Display with Furigana (if any) */}
           {currentQ.japaneseText && (
-            <View style={styles.japaneseBox}>
+            <View style={[styles.japaneseBox, { backgroundColor: theme.bgSubtle }]}>
               <FuriganaText
                 text={currentQ.japaneseText}
                 fontSize={22}
@@ -291,9 +294,9 @@ export default observer(function UnitQuizScreen() {
           {currentQ.type === 'sentence-scramble' && (
             <View style={styles.scrambleSection}>
               {/* Dropzone */}
-              <View style={styles.dropZone}>
+              <View style={[styles.dropZone, { backgroundColor: theme.bgSubtle, borderColor: theme.borderSubtle }]}>
                 {selectedScrambleWords.length === 0 ? (
-                  <Text style={styles.dropPlaceholder}>
+                  <Text style={[styles.dropPlaceholder, { color: theme.textTertiary }]}>
                     Chạm các từ phía dưới để xếp thành câu...
                   </Text>
                 ) : (
@@ -302,9 +305,9 @@ export default observer(function UnitQuizScreen() {
                       <TouchableOpacity
                         key={idx}
                         onPress={() => handleRemoveScrambleWord(w, idx)}
-                        style={styles.selectedWordPill}
+                        style={[styles.selectedWordPill, { backgroundColor: theme.mode === 'light' ? theme.accentBg : 'rgba(244, 63, 94, 0.2)', borderColor: theme.accent }]}
                       >
-                        <Text style={styles.selectedWordText}>{w}</Text>
+                        <Text style={[styles.selectedWordText, { color: theme.accent }]}>{w}</Text>
                       </TouchableOpacity>
                     ))}
                   </View>
@@ -312,15 +315,15 @@ export default observer(function UnitQuizScreen() {
               </View>
 
               {/* Word Bank */}
-              <Text style={styles.bankTitle}>CÁC TỪ GỢI Ý:</Text>
+              <Text style={[styles.bankTitle, { color: theme.textSecondary }]}>CÁC TỪ GỢI Ý:</Text>
               <View style={styles.wordsWrap}>
                 {scrambleBank.map((w, idx) => (
                   <TouchableOpacity
                     key={idx}
                     onPress={() => handleSelectScrambleWord(w, idx)}
-                    style={styles.bankWordPill}
+                    style={[styles.bankWordPill, { backgroundColor: theme.bgSubtle, borderColor: theme.borderSubtle }]}
                   >
-                    <Text style={styles.bankWordText}>{w}</Text>
+                    <Text style={[styles.bankWordText, { color: theme.textPrimary }]}>{w}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -332,8 +335,10 @@ export default observer(function UnitQuizScreen() {
             <View style={styles.optionsList}>
               {currentQ.options.map((opt) => {
                 const isSelected = selectedOptionId === opt.id;
-                let optionStyle = styles.optionItem;
-                if (isSelected) optionStyle = [styles.optionItem, styles.optionItemSelected];
+                let optionStyle: any = [styles.optionItem, { backgroundColor: theme.bgSubtle, borderColor: theme.borderSubtle }];
+                if (isSelected) {
+                  optionStyle = [styles.optionItem, { backgroundColor: theme.accentBg, borderColor: theme.accent, borderWidth: 2 }];
+                }
                 if (isAnswerChecked) {
                   if (opt.isCorrect) {
                     optionStyle = [styles.optionItem, styles.optionItemCorrect];
@@ -352,7 +357,8 @@ export default observer(function UnitQuizScreen() {
                     <Text
                       style={[
                         styles.optionText,
-                        isSelected && styles.optionTextSelected,
+                        { color: theme.textPrimary },
+                        isSelected && { color: theme.accent, fontWeight: '800' },
                         isAnswerChecked && opt.isCorrect && styles.optionTextCorrect,
                       ]}
                     >
@@ -382,7 +388,7 @@ export default observer(function UnitQuizScreen() {
       </ScrollView>
 
       {/* Bottom Floating Action Bar */}
-      <View style={styles.bottomBar}>
+      <View style={[styles.bottomBar, { backgroundColor: theme.bgSurface, borderTopColor: theme.borderSubtle }]}>
         {!isAnswerChecked ? (
           <Button
             title="Kiểm tra đáp án"
@@ -394,6 +400,7 @@ export default observer(function UnitQuizScreen() {
                 : !selectedOptionId
             }
             onPress={handleCheckAnswer}
+            style={theme.mode === 'light' ? { backgroundColor: theme.accent } : undefined}
           />
         ) : (
           <Button
@@ -401,6 +408,7 @@ export default observer(function UnitQuizScreen() {
             variant="primary"
             size="lg"
             onPress={handleNextQuestion}
+            style={theme.mode === 'light' ? { backgroundColor: theme.accent } : undefined}
           />
         )}
       </View>
@@ -411,11 +419,11 @@ export default observer(function UnitQuizScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.dark.bgApp,
+    backgroundColor: colors.dark.bgCanvas,
   },
   centerContainer: {
     flex: 1,
-    backgroundColor: colors.dark.bgApp,
+    backgroundColor: colors.dark.bgCanvas,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,

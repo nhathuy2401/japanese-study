@@ -15,6 +15,7 @@ import { Card } from './Card';
 import { Badge } from './Badge';
 import { hapticService } from '../services/haptics/hapticService';
 import { KanaCharacter } from '../data/kana/kanaData';
+import { useAppTheme } from '../stores/StoreContext';
 
 interface Point {
   x: number;
@@ -40,6 +41,7 @@ export const CharacterWriteCard: React.FC<CharacterWriteCardProps> = ({
   character,
   onClose,
 }) => {
+  const theme = useAppTheme();
   const [strokes, setStrokes] = useState<Stroke[]>([]);
   const [currentStroke, setCurrentStroke] = useState<Stroke>([]);
   const [showGhost, setShowGhost] = useState(true);
@@ -113,32 +115,38 @@ export const CharacterWriteCard: React.FC<CharacterWriteCardProps> = ({
   };
 
   return (
-    <Card style={styles.card} variant="elevated">
+    <Card style={[styles.card, { backgroundColor: theme.bgSurface, borderColor: theme.borderSubtle }]} variant="elevated">
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <Badge label={`Số nét: ${character.strokeCount || 1}`} variant="purple" />
-          <Text style={styles.charRomaji}>Phát âm: /{character.romaji}/</Text>
+          <Text style={[styles.charRomaji, { color: theme.accent }]}>Phát âm: /{character.romaji}/</Text>
         </View>
         {onClose && (
-          <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-            <Text style={styles.closeBtnText}>✕ Đóng</Text>
+          <TouchableOpacity onPress={onClose} style={[styles.closeBtn, { backgroundColor: theme.bgSubtle }]}>
+            <Text style={[styles.closeBtnText, { color: theme.textSecondary }]}>✕ Đóng</Text>
           </TouchableOpacity>
         )}
       </View>
 
       {/* Main Canvas Rice Grid */}
       <View style={styles.canvasContainer}>
-        <View style={styles.riceGrid} {...panResponder.panHandlers}>
+        <View style={[styles.riceGrid, { backgroundColor: theme.bgSubtle, borderColor: theme.borderSubtle }]} {...panResponder.panHandlers}>
           {/* Rice Grid Guide Lines (Lưới chữ Mễ) */}
-          <View style={styles.gridLineHorizontal} />
-          <View style={styles.gridLineVertical} />
-          <View style={styles.gridLineDiagonal1} />
-          <View style={styles.gridLineDiagonal2} />
+          <View style={[styles.gridLineHorizontal, { backgroundColor: theme.borderSubtle }]} />
+          <View style={[styles.gridLineVertical, { backgroundColor: theme.borderSubtle }]} />
+          <View style={[styles.gridLineDiagonal1, { backgroundColor: theme.borderSubtle }]} />
+          <View style={[styles.gridLineDiagonal2, { backgroundColor: theme.borderSubtle }]} />
 
           {/* Ghost Guide Outline */}
           {showGhost && (
-            <Text style={styles.ghostText} pointerEvents="none">
+            <Text
+              style={[
+                styles.ghostText,
+                { color: theme.mode === 'light' ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.12)' },
+              ]}
+              pointerEvents="none"
+            >
               {character.char}
             </Text>
           )}
@@ -149,7 +157,7 @@ export const CharacterWriteCard: React.FC<CharacterWriteCardProps> = ({
               <Path
                 key={idx}
                 d={strokeToPath(stroke)}
-                stroke={colors.accent}
+                stroke={theme.accent}
                 strokeWidth={7}
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -159,7 +167,7 @@ export const CharacterWriteCard: React.FC<CharacterWriteCardProps> = ({
             {currentStroke.length > 0 && (
               <Path
                 d={strokeToPath(currentStroke)}
-                stroke={colors.accent}
+                stroke={theme.accent}
                 strokeWidth={7}
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -172,52 +180,54 @@ export const CharacterWriteCard: React.FC<CharacterWriteCardProps> = ({
 
       {/* Canvas Tool Buttons */}
       <View style={styles.toolsRow}>
-        <TouchableOpacity style={styles.toolBtn} onPress={toggleGhost}>
-          <Text style={styles.toolBtnText}>{showGhost ? '👁️ Ẩn nét mờ' : '👁️ Hiện nét mờ'}</Text>
+        <TouchableOpacity style={[styles.toolBtn, { backgroundColor: theme.bgSubtle }]} onPress={toggleGhost}>
+          <Text style={[styles.toolBtnText, { color: theme.textSecondary }]}>
+            {showGhost ? '👁️ Ẩn nét mờ' : '👁️ Hiện nét mờ'}
+          </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.toolBtn, strokes.length === 0 && styles.toolBtnDisabled]}
+          style={[styles.toolBtn, { backgroundColor: theme.bgSubtle }, strokes.length === 0 && styles.toolBtnDisabled]}
           onPress={handleUndo}
           disabled={strokes.length === 0}
         >
-          <Text style={styles.toolBtnText}>↩ Hoàn tác</Text>
+          <Text style={[styles.toolBtnText, { color: theme.textSecondary }]}>↩ Hoàn tác</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.toolBtn, strokes.length === 0 && styles.toolBtnDisabled]}
+          style={[styles.toolBtn, { backgroundColor: theme.bgSubtle }, strokes.length === 0 && styles.toolBtnDisabled]}
           onPress={handleClear}
           disabled={strokes.length === 0}
         >
-          <Text style={styles.toolBtnText}>🗑️ Xóa nét</Text>
+          <Text style={[styles.toolBtnText, { color: theme.textSecondary }]}>🗑️ Xóa nét</Text>
         </TouchableOpacity>
       </View>
 
       {/* Stroke counter feedback */}
-      <View style={styles.strokeCountBanner}>
-        <Text style={styles.strokeCountText}>
-          ✍️ Bạn đã viết: <Text style={styles.strokeCountBold}>{strokes.length}</Text> / {character.strokeCount || 1} nét
+      <View style={[styles.strokeCountBanner, { backgroundColor: theme.bgSubtle }]}>
+        <Text style={[styles.strokeCountText, { color: theme.textSecondary }]}>
+          ✍️ Bạn đã viết: <Text style={[styles.strokeCountBold, { color: theme.accent }]}>{strokes.length}</Text> / {character.strokeCount || 1} nét
         </Text>
       </View>
 
       {/* Mnemonic Memory Trick */}
       {character.mnemonic && (
-        <View style={styles.mnemonicBox}>
-          <Text style={styles.mnemonicTitle}>💡 MẸO GHI NHỚ MẶT CHỮ:</Text>
-          <Text style={styles.mnemonicText}>{character.mnemonic}</Text>
+        <View style={[styles.mnemonicBox, { backgroundColor: theme.bgSubtle, borderColor: theme.borderSubtle }]}>
+          <Text style={[styles.mnemonicTitle, { color: theme.accent }]}>💡 MẸO GHI NHỚ MẶT CHỮ:</Text>
+          <Text style={[styles.mnemonicText, { color: theme.textPrimary }]}>{character.mnemonic}</Text>
         </View>
       )}
 
       {/* Sample Words */}
       {character.sampleWords && character.sampleWords.length > 0 && (
-        <View style={styles.wordsBox}>
-          <Text style={styles.wordsTitle}>TỪ VỰNG VÍ DỤ:</Text>
+        <View style={[styles.wordsBox, { backgroundColor: theme.bgSubtle, borderColor: theme.borderSubtle }]}>
+          <Text style={[styles.wordsTitle, { color: theme.textSecondary }]}>TỪ VỰNG VÍ DỤ:</Text>
           <View style={styles.wordsList}>
             {character.sampleWords.map((sw, idx) => (
-              <View key={idx} style={styles.wordChip}>
-                <Text style={styles.wordJapanese}>{sw.word}</Text>
-                <Text style={styles.wordReading}>({sw.reading})</Text>
-                <Text style={styles.wordMeaning}>: {sw.meaningVi}</Text>
+              <View key={idx} style={[styles.wordChip, { backgroundColor: theme.bgSurface, borderColor: theme.borderSubtle }]}>
+                <Text style={[styles.wordJapanese, { color: theme.textPrimary }]}>{sw.word}</Text>
+                <Text style={[styles.wordReading, { color: theme.accent }]}>({sw.reading})</Text>
+                <Text style={[styles.wordMeaning, { color: theme.textSecondary }]}>: {sw.meaningVi}</Text>
               </View>
             ))}
           </View>

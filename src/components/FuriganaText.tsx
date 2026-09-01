@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, StyleProp, ViewStyle, TextStyle } from 'react-native';
 import { observer } from 'mobx-react-lite';
 import { parseFurigana, FuriganaSegment } from '../utils/furiganaHelper';
-import { useSettingsStore } from '../stores/StoreContext';
+import { useSettingsStore, useAppTheme } from '../stores/StoreContext';
 import { colors } from '../theme/colors';
 
 export interface FuriganaTextProps {
@@ -23,14 +23,17 @@ export const FuriganaText: React.FC<FuriganaTextProps> = observer(({
   segments: propSegments,
   fontSize = 18,
   furiganaFontSize = 10,
-  color = colors.dark.textPrimary,
-  furiganaColor = '#94A3B8',
+  color: propColor,
+  furiganaColor: propFuriganaColor,
   style,
   textStyle,
   forceShow = false,
   onPressSegment,
 }) => {
   const settings = useSettingsStore();
+  const theme = useAppTheme();
+  const color = propColor || theme.textPrimary;
+  const furiganaColor = propFuriganaColor || (theme.mode === 'light' ? theme.textSecondary : '#94A3B8');
   const [revealedIndices, setRevealedIndices] = useState<Record<number, boolean>>({});
 
   const segments = propSegments || parseFurigana(text);

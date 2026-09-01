@@ -1,16 +1,17 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { observer } from 'mobx-react-lite';
-import { useProgressStore } from '../stores/StoreContext';
+import { useProgressStore, useAppTheme } from '../stores/StoreContext';
 import { colors } from '../theme/colors';
 
 export const StreakHeatmap: React.FC = observer(() => {
   const progress = useProgressStore();
+  const theme = useAppTheme();
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.bgSurface, borderColor: theme.borderSubtle }]}>
       <View style={styles.header}>
-        <Text style={styles.title}>CHUỖI HỌC (STREAK)</Text>
+        <Text style={[styles.title, { color: theme.textSecondary }]}>CHUỖI HỌC (STREAK)</Text>
         <Text style={styles.streakCount}>🔥 {progress.currentStreak} ngày liên tiếp</Text>
       </View>
 
@@ -20,11 +21,11 @@ export const StreakHeatmap: React.FC = observer(() => {
             <View
               style={[
                 styles.square,
-                item.studied ? styles.squareStudied : styles.squareEmpty,
-                idx === 6 && styles.squareToday,
+                item.studied ? styles.squareStudied : [styles.squareEmpty, { backgroundColor: theme.bgSubtle, borderColor: theme.borderSubtle }],
+                idx === 6 && [styles.squareToday, { borderColor: theme.accent }],
               ]}
             />
-            <Text style={[styles.dayLabel, idx === 6 && styles.dayTodayLabel]}>
+            <Text style={[styles.dayLabel, { color: theme.textTertiary }, idx === 6 && [styles.dayTodayLabel, { color: theme.accent }]]}>
               {item.day}
             </Text>
           </View>
@@ -36,11 +37,9 @@ export const StreakHeatmap: React.FC = observer(() => {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: colors.dark.bgSurface,
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: colors.dark.borderSubtle,
     marginVertical: 8,
   },
   header: {
@@ -52,7 +51,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#94A3B8',
     letterSpacing: 0.5,
   },
   streakCount: {
@@ -68,31 +66,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   square: {
-    width: 32,
-    height: 32,
+    width: 36,
+    height: 36,
     borderRadius: 8,
-    marginBottom: 6,
+    borderWidth: 1,
   },
   squareStudied: {
-    backgroundColor: colors.success,
+    backgroundColor: '#10B981',
+    borderColor: '#059669',
   },
   squareEmpty: {
-    backgroundColor: colors.dark.bgSubtle,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
   },
   squareToday: {
     borderWidth: 2,
-    borderColor: colors.accent,
   },
   dayLabel: {
     fontSize: 11,
-    color: '#64748B',
     fontWeight: '600',
+    marginTop: 6,
   },
   dayTodayLabel: {
-    color: colors.dark.textPrimary,
-    fontWeight: '700',
+    fontWeight: '800',
   },
 });
-

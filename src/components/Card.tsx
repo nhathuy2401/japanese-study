@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, StyleProp, ViewStyle } from 'react-native';
-import { colors } from '../theme/colors';
+import { useAppTheme } from '../stores/StoreContext';
 
 interface CardProps {
   children: React.ReactNode;
@@ -9,14 +9,16 @@ interface CardProps {
 }
 
 export const Card: React.FC<CardProps> = ({ children, style, variant = 'surface' }) => {
+  const theme = useAppTheme();
+
   const getBg = () => {
     switch (variant) {
       case 'subtle':
-        return colors.dark.bgSubtle;
+        return theme.bgSubtle;
       case 'elevated':
-        return '#1A2436';
+        return theme.mode === 'light' ? '#FFFFFF' : '#1A2436';
       default:
-        return colors.dark.bgSurface;
+        return theme.bgSurface;
     }
   };
 
@@ -26,7 +28,7 @@ export const Card: React.FC<CardProps> = ({ children, style, variant = 'surface'
         styles.card,
         {
           backgroundColor: getBg(),
-          borderColor: colors.dark.borderSubtle,
+          borderColor: theme.borderSubtle,
         },
         style,
       ]}

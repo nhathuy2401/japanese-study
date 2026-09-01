@@ -128,14 +128,14 @@ export default observer(function LearnScreen() {
         {selectedLevelId === 'intro' ? (
           <View style={styles.kanaDashboard}>
             {/* Banner giới thiệu */}
-            <View style={styles.kanaIntroBanner}>
+            <View style={[styles.kanaIntroBanner, { backgroundColor: theme.bgSurface, borderColor: theme.borderSubtle }]}>
               <View style={styles.kanaIntroHeader}>
                 <Badge label="DÀNH CHO NGƯỜI MỚI BẮT ĐẦU" variant="purple" />
-                <Text style={styles.kanaCountText}>{currentKanaList.length} ký tự</Text>
+                <Text style={[styles.kanaCountText, { color: theme.textSecondary }]}>{currentKanaList.length} ký tự</Text>
               </View>
-              <Text style={styles.kanaIntroTitle}>🎌 Bảng Chữ Cái Tiếng Nhật</Text>
-              <Text style={styles.kanaIntroDesc}>
-                Làm quen với mặt chữ, phát âm Romaji và chạm vào bất kỳ chữ nào để mở <Text style={{ color: colors.accent, fontWeight: '700' }}>card luyện viết nét</Text> bằng ngón tay!
+              <Text style={[styles.kanaIntroTitle, { color: theme.textPrimary }]}>🎌 Bảng Chữ Cái Tiếng Nhật</Text>
+              <Text style={[styles.kanaIntroDesc, { color: theme.textSecondary }]}>
+                Làm quen với mặt chữ, phát âm Romaji và chạm vào bất kỳ chữ nào để mở <Text style={{ color: theme.accent, fontWeight: '700' }}>card luyện viết nét</Text> bằng ngón tay!
               </Text>
             </View>
 
@@ -146,16 +146,22 @@ export default observer(function LearnScreen() {
                 hapticService.medium();
                 router.push('/quiz/kana-quiz' as any);
               }}
-              style={styles.kanaQuizBanner}
+              style={[
+                styles.kanaQuizBanner,
+                {
+                  backgroundColor: theme.mode === 'light' ? theme.accentBg : 'rgba(244, 63, 94, 0.12)',
+                  borderColor: theme.mode === 'light' ? theme.accent : 'rgba(244, 63, 94, 0.35)',
+                },
+              ]}
             >
               <View style={styles.kanaQuizLeft}>
                 <Text style={styles.kanaQuizIcon}>🎯</Text>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.kanaQuizTitle}>Bài kiểm tra Bảng chữ cái (Kana Test)</Text>
-                  <Text style={styles.kanaQuizSubtitle}>10 câu trắc nghiệm nhận diện mặt chữ & Romaji · +30 XP</Text>
+                  <Text style={[styles.kanaQuizTitle, { color: theme.textPrimary }]}>Bài kiểm tra Bảng chữ cái (Kana Test)</Text>
+                  <Text style={[styles.kanaQuizSubtitle, { color: theme.textSecondary }]}>10 câu trắc nghiệm nhận diện mặt chữ & Romaji · +30 XP</Text>
                 </View>
               </View>
-              <View style={styles.kanaQuizBadge}>
+              <View style={[styles.kanaQuizBadge, { backgroundColor: theme.accent }]}>
                 <Text style={styles.kanaQuizBadgeText}>Vào thi ➔</Text>
               </View>
             </TouchableOpacity>
@@ -163,27 +169,35 @@ export default observer(function LearnScreen() {
             {/* Type Switcher: Hiragana vs Katakana */}
             <View style={styles.kanaTypeSwitch}>
               <TouchableOpacity
-                style={[styles.typeTab, kanaType === 'hiragana' && styles.typeTabActive]}
+                style={[
+                  styles.typeTab,
+                  { backgroundColor: theme.bgSubtle },
+                  kanaType === 'hiragana' && { backgroundColor: theme.accentBg, borderColor: theme.accent, borderWidth: 1.5 },
+                ]}
                 onPress={() => {
                   hapticService.light();
                   setKanaType('hiragana');
                   setActiveKana(null);
                 }}
               >
-                <Text style={[styles.typeTabText, kanaType === 'hiragana' && styles.typeTabTextActive]}>
+                <Text style={[styles.typeTabText, { color: theme.textSecondary }, kanaType === 'hiragana' && { color: theme.accent, fontWeight: '800' }]}>
                   Hiragana (Chữ mềm)
                 </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.typeTab, kanaType === 'katakana' && styles.typeTabActive]}
+                style={[
+                  styles.typeTab,
+                  { backgroundColor: theme.bgSubtle },
+                  kanaType === 'katakana' && { backgroundColor: theme.accentBg, borderColor: theme.accent, borderWidth: 1.5 },
+                ]}
                 onPress={() => {
                   hapticService.light();
                   setKanaType('katakana');
                   setActiveKana(null);
                 }}
               >
-                <Text style={[styles.typeTabText, kanaType === 'katakana' && styles.typeTabTextActive]}>
+                <Text style={[styles.typeTabText, { color: theme.textSecondary }, kanaType === 'katakana' && { color: theme.accent, fontWeight: '800' }]}>
                   Katakana (Chữ cứng)
                 </Text>
               </TouchableOpacity>
@@ -198,7 +212,7 @@ export default observer(function LearnScreen() {
             )}
 
             {/* Filter Pills theo Hàng âm */}
-            <Text style={styles.sectionHeading}>CHỌN HÀNG ÂM CẦN HỌC:</Text>
+            <Text style={[styles.sectionHeading, { color: theme.textSecondary }]}>CHỌN HÀNG ÂM CẦN HỌC:</Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -216,28 +230,33 @@ export default observer(function LearnScreen() {
                 { id: 'ya', label: 'Hàng Ya' },
                 { id: 'ra', label: 'Hàng Ra' },
                 { id: 'wa', label: 'Hàng Wa & N' },
-              ].map((row) => (
-                <TouchableOpacity
-                  key={row.id}
-                  onPress={() => {
-                    hapticService.light();
-                    setSelectedRow(row.id);
-                  }}
-                  style={[
-                    styles.rowPill,
-                    selectedRow === row.id && styles.rowPillActive,
-                  ]}
-                >
-                  <Text
+              ].map((row) => {
+                const isRowActive = selectedRow === row.id;
+                return (
+                  <TouchableOpacity
+                    key={row.id}
+                    onPress={() => {
+                      hapticService.light();
+                      setSelectedRow(row.id);
+                    }}
                     style={[
-                      styles.rowPillText,
-                      selectedRow === row.id && styles.rowPillTextActive,
+                      styles.rowPill,
+                      { backgroundColor: theme.bgSubtle, borderColor: theme.borderSubtle },
+                      isRowActive && { backgroundColor: theme.accentBg, borderColor: theme.accent },
                     ]}
                   >
-                    {row.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+                    <Text
+                      style={[
+                        styles.rowPillText,
+                        { color: theme.textSecondary },
+                        isRowActive && { color: theme.accent, fontWeight: '800' },
+                      ]}
+                    >
+                      {row.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
             </ScrollView>
 
             {/* Lưới các thẻ chữ Kana (5 cột chuẩn) */}
@@ -254,15 +273,16 @@ export default observer(function LearnScreen() {
                     }}
                     style={[
                       styles.kanaCard,
-                      isSelected && styles.kanaCardSelected,
+                      { backgroundColor: theme.bgSurface, borderColor: theme.borderSubtle },
+                      isSelected && { borderColor: theme.accent, backgroundColor: theme.accentBg },
                     ]}
                   >
-                    <Text style={[styles.kanaChar, isSelected && { color: colors.accent }]}>
+                    <Text style={[styles.kanaChar, { color: theme.textPrimary }, isSelected && { color: theme.accent }]}>
                       {item.char}
                     </Text>
-                    <Text style={styles.kanaRomaji}>{item.romaji}</Text>
-                    <View style={styles.strokeBadge}>
-                      <Text style={styles.kanaStrokes}>{item.strokeCount} nét</Text>
+                    <Text style={[styles.kanaRomaji, { color: theme.textSecondary }]}>{item.romaji}</Text>
+                    <View style={[styles.strokeBadge, { backgroundColor: theme.bgSubtle }]}>
+                      <Text style={[styles.kanaStrokes, { color: theme.textTertiary }]}>{item.strokeCount} nét</Text>
                     </View>
                   </TouchableOpacity>
                 );
@@ -273,32 +293,32 @@ export default observer(function LearnScreen() {
           /* TAB JLPT N5 - N2: UNITS ROADMAP */
           <View>
             {/* Pro Learner Skip Checkpoint Banner */}
-            <View style={styles.skipBanner}>
+            <View style={[styles.skipBanner, { backgroundColor: theme.bgSurface, borderColor: theme.borderSubtle }]}>
               <View style={styles.skipInfo}>
-                <Text style={styles.skipTitle}>⚡ Đã có nền tảng tiếng Nhật?</Text>
-                <Text style={styles.skipSubtitle}>Làm bài test 3 phút để nhảy cóc bài dễ và mở khóa cấp độ cao hơn.</Text>
+                <Text style={[styles.skipTitle, { color: theme.textPrimary }]}>⚡ Đã có nền tảng tiếng Nhật?</Text>
+                <Text style={[styles.skipSubtitle, { color: theme.textSecondary }]}>Làm bài test 3 phút để nhảy cóc bài dễ và mở khóa cấp độ cao hơn.</Text>
               </View>
-              <TouchableOpacity style={styles.skipBtn} onPress={handleSkipLevel}>
+              <TouchableOpacity style={[styles.skipBtn, { backgroundColor: theme.accent }]} onPress={handleSkipLevel}>
                 <Text style={styles.skipBtnText}>Mở khóa ➔</Text>
               </TouchableOpacity>
             </View>
 
             {isLoading ? (
-              <ActivityIndicator size="large" color={colors.accent} style={{ marginTop: 40 }} />
+              <ActivityIndicator size="large" color={theme.accent} style={{ marginTop: 40 }} />
             ) : (
               /* Units Roadmap */
               <View style={styles.unitsContainer}>
                 {units.map((unit, index) => (
-                  <Card key={unit.id} style={styles.unitCard}>
+                  <Card key={unit.id} style={[styles.unitCard, { backgroundColor: theme.bgSurface, borderColor: theme.borderSubtle }]}>
                     <View style={styles.unitHeader}>
                       <Badge label={`UNIT ${index + 1}`} variant="primary" />
-                      <Text style={styles.unitStatus}>
+                      <Text style={[styles.unitStatus, { color: theme.accent }]}>
                         {index === 0 ? '▶ Đang học' : '🔒 Đã mở'}
                       </Text>
                     </View>
 
-                    <Text style={styles.unitTitle}>{unit.title}</Text>
-                    <Text style={styles.unitDescription}>{unit.description}</Text>
+                    <Text style={[styles.unitTitle, { color: theme.textPrimary }]}>{unit.title}</Text>
+                    <Text style={[styles.unitDescription, { color: theme.textSecondary }]}>{unit.description}</Text>
 
                     {/* Lessons within this Unit */}
                     <View style={styles.lessonsList}>
@@ -307,14 +327,15 @@ export default observer(function LearnScreen() {
                           key={lesson.id}
                           style={[
                             styles.lessonItem,
-                            lIdx === 0 && styles.lessonItemActive,
+                            { backgroundColor: theme.bgSubtle },
+                            lIdx === 0 && { borderColor: theme.accent, borderWidth: 1 },
                           ]}
                           onPress={() => handleStartLesson(lesson.id)}
                         >
                           <Text
                             style={[
                               styles.lessonIcon,
-                              lIdx === 0 && { color: colors.accent },
+                              { color: lIdx === 0 ? theme.accent : theme.textTertiary },
                             ]}
                           >
                             {lIdx === 0 ? '▶' : '●'}
@@ -323,16 +344,17 @@ export default observer(function LearnScreen() {
                             <Text
                               style={[
                                 styles.lessonItemTitle,
-                                lIdx === 0 && { color: colors.accent },
+                                { color: theme.textPrimary },
+                                lIdx === 0 && { color: theme.accent, fontWeight: '800' },
                               ]}
                             >
                               {lesson.title}
                             </Text>
-                            <Text style={styles.lessonItemMeta}>
+                            <Text style={[styles.lessonItemMeta, { color: theme.textTertiary }]}>
                               {lesson.type === 'grammar' ? 'Ngữ pháp & Kanji' : 'Ôn tập'} • {lesson.durationMinutes} phút
                             </Text>
                           </View>
-                          <Text style={styles.lessonItemAction}>Học ➔</Text>
+                          <Text style={[styles.lessonItemAction, { color: theme.accent }]}>Học ➔</Text>
                         </TouchableOpacity>
                       ))}
                     </View>
@@ -341,16 +363,22 @@ export default observer(function LearnScreen() {
                     <TouchableOpacity
                       activeOpacity={0.8}
                       onPress={() => handleStartUnitQuiz(unit.id)}
-                      style={styles.unitQuizButton}
+                      style={[
+                        styles.unitQuizButton,
+                        {
+                          backgroundColor: theme.mode === 'light' ? theme.accentBg : 'rgba(244, 63, 94, 0.1)',
+                          borderColor: theme.mode === 'light' ? theme.accent : 'rgba(244, 63, 94, 0.3)',
+                        },
+                      ]}
                     >
                       <View style={styles.unitQuizLeft}>
                         <Text style={styles.unitQuizIcon}>🎯</Text>
                         <View style={{ flex: 1 }}>
-                          <Text style={styles.unitQuizTitle}>Bài kiểm tra Unit {index + 1}</Text>
-                          <Text style={styles.unitQuizSubtitle}>5 câu trắc nghiệm & sắp xếp câu · +50 XP</Text>
+                          <Text style={[styles.unitQuizTitle, { color: theme.textPrimary }]}>Bài kiểm tra Unit {index + 1}</Text>
+                          <Text style={[styles.unitQuizSubtitle, { color: theme.textSecondary }]}>5 câu trắc nghiệm & sắp xếp câu · +50 XP</Text>
                         </View>
                       </View>
-                      <View style={styles.unitQuizBadge}>
+                      <View style={[styles.unitQuizBadge, { backgroundColor: theme.accent }]}>
                         <Text style={styles.unitQuizBadgeText}>Vào thi ➔</Text>
                       </View>
                     </TouchableOpacity>

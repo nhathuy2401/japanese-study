@@ -3,12 +3,14 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { DomainKanji } from '../domain/entities/types';
 import { colors } from '../theme/colors';
 import { hapticService } from '../services/haptics/hapticService';
+import { useAppTheme } from '../stores/StoreContext';
 
 interface KanjiCanvasProps {
   kanji: DomainKanji;
 }
 
 export const KanjiCanvas: React.FC<KanjiCanvasProps> = ({ kanji }) => {
+  const theme = useAppTheme();
   const [showHint, setShowHint] = useState<boolean>(true);
   const hasVerifiedRadicals = kanji.radicals.length > 0;
 
@@ -18,14 +20,14 @@ export const KanjiCanvas: React.FC<KanjiCanvasProps> = ({ kanji }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.bgSurface, borderColor: theme.borderSubtle }]}>
       {/* Header */}
       <View style={styles.header}>
         <View>
-          <Text style={styles.title}>
+          <Text style={[styles.title, { color: theme.textPrimary }]}>
             KANJI N5: {kanji.character} ({kanji.meaningsVi.join(', ')})
           </Text>
-          <Text style={styles.subtitle}>Số nét: {kanji.strokeCount || 'N/A'}</Text>
+          <Text style={[styles.subtitle, { color: theme.textSecondary }]}>Số nét: {kanji.strokeCount || 'N/A'}</Text>
         </View>
       </View>
 
@@ -33,23 +35,29 @@ export const KanjiCanvas: React.FC<KanjiCanvasProps> = ({ kanji }) => {
       <View style={styles.mainRow}>
         {/* Rice Grid (Lưới chữ Mễ 米) */}
         <View style={styles.canvasWrapper}>
-          <View style={styles.riceGrid}>
+          <View style={[styles.riceGrid, { backgroundColor: theme.bgSubtle, borderColor: theme.borderSubtle }]}>
             {/* Diagonal & Center Grid Lines */}
-            <View style={styles.gridLineHorizontal} />
-            <View style={styles.gridLineVertical} />
-            <View style={styles.gridLineDiagonal1} />
-            <View style={styles.gridLineDiagonal2} />
+            <View style={[styles.gridLineHorizontal, { backgroundColor: theme.borderSubtle }]} />
+            <View style={[styles.gridLineVertical, { backgroundColor: theme.borderSubtle }]} />
+            <View style={[styles.gridLineDiagonal1, { backgroundColor: theme.borderSubtle }]} />
+            <View style={[styles.gridLineDiagonal2, { backgroundColor: theme.borderSubtle }]} />
 
             {/* Kanji Character Ghost Guide */}
-            <Text style={[styles.ghostKanji, !showHint && styles.hiddenGhost]}>
+            <Text
+              style={[
+                styles.ghostKanji,
+                { color: theme.mode === 'light' ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.12)' },
+                !showHint && styles.hiddenGhost,
+              ]}
+            >
               {kanji.character}
             </Text>
           </View>
 
           {/* Canvas Actions */}
           <View style={styles.canvasActions}>
-            <TouchableOpacity style={styles.hintBtn} onPress={toggleHint}>
-              <Text style={styles.hintBtnText}>{showHint ? '👁️ Ẩn nét mờ' : '👁️ Hiện gợi ý'}</Text>
+            <TouchableOpacity style={[styles.hintBtn, { backgroundColor: theme.bgSubtle }]} onPress={toggleHint}>
+              <Text style={[styles.hintBtnText, { color: theme.textSecondary }]}>{showHint ? '👁️ Ẩn nét mờ' : '👁️ Hiện gợi ý'}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -58,14 +66,14 @@ export const KanjiCanvas: React.FC<KanjiCanvasProps> = ({ kanji }) => {
         <View style={styles.infoWrapper}>
           {hasVerifiedRadicals ? (
             <>
-              <Text style={styles.sectionTitle}>PHÂN RÃ THÀNH PHẦN</Text>
+              <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>PHÂN RÃ THÀNH PHẦN</Text>
               <View style={styles.radicalsList}>
                 {kanji.radicals.map((rad, idx) => (
-                  <View key={idx} style={styles.radicalItem}>
-                    <Text style={styles.radicalSymbol}>{rad.symbol}</Text>
+                  <View key={idx} style={[styles.radicalItem, { backgroundColor: theme.bgSubtle, borderColor: theme.borderSubtle }]}>
+                    <Text style={[styles.radicalSymbol, { color: theme.accent }]}>{rad.symbol}</Text>
                     <View style={styles.radicalDetail}>
-                      <Text style={styles.radicalName}>{rad.name}</Text>
-                      <Text style={styles.radicalMeaning}>({rad.meaningVi})</Text>
+                      <Text style={[styles.radicalName, { color: theme.textPrimary }]}>{rad.name}</Text>
+                      <Text style={[styles.radicalMeaning, { color: theme.textSecondary }]}>({rad.meaningVi})</Text>
                     </View>
                   </View>
                 ))}
@@ -75,30 +83,30 @@ export const KanjiCanvas: React.FC<KanjiCanvasProps> = ({ kanji }) => {
 
           {/* Mnemonic Story */}
           {kanji.mnemonic && (
-            <View style={styles.mnemonicBox}>
-              <Text style={styles.mnemonicTitle}>💡 CÂU CHUYỆN GỢI NHỚ:</Text>
-              <Text style={styles.mnemonicText}>{kanji.mnemonic}</Text>
+            <View style={[styles.mnemonicBox, { backgroundColor: theme.bgSubtle, borderColor: theme.borderSubtle }]}>
+              <Text style={[styles.mnemonicTitle, { color: theme.accent }]}>💡 CÂU CHUYỆN GỢI NHỚ:</Text>
+              <Text style={[styles.mnemonicText, { color: theme.textPrimary }]}>{kanji.mnemonic}</Text>
             </View>
           )}
 
           {/* On/Kun readings */}
           <View style={styles.readingRow}>
-            <Text style={styles.readingLabel}>• On: <Text style={styles.readingVal}>{kanji.onyomi.join(', ')}</Text></Text>
-            <Text style={styles.readingLabel}>• Kun: <Text style={styles.readingVal}>{kanji.kunyomi.join(', ')}</Text></Text>
+            <Text style={[styles.readingLabel, { color: theme.textSecondary }]}>• On: <Text style={[styles.readingVal, { color: theme.textPrimary }]}>{kanji.onyomi.join(', ')}</Text></Text>
+            <Text style={[styles.readingLabel, { color: theme.textSecondary }]}>• Kun: <Text style={[styles.readingVal, { color: theme.textPrimary }]}>{kanji.kunyomi.join(', ')}</Text></Text>
           </View>
         </View>
       </View>
 
       {/* Common Kanji Compounds */}
       {kanji.vocabCompounds && kanji.vocabCompounds.length > 0 && (
-        <View style={styles.compoundsBox}>
-          <Text style={styles.compoundsHeader}>TỪ GHÉP QUAN TRỌNG</Text>
+        <View style={[styles.compoundsBox, { backgroundColor: theme.bgSubtle, borderColor: theme.borderSubtle }]}>
+          <Text style={[styles.compoundsHeader, { color: theme.textSecondary }]}>TỪ GHÉP QUAN TRỌNG</Text>
           <View style={styles.compoundsList}>
             {kanji.vocabCompounds.map((comp, idx) => (
-              <View key={idx} style={styles.compoundChip}>
-                <Text style={styles.compoundExpr}>{comp.expression}</Text>
-                <Text style={styles.compoundReading}>({comp.reading})</Text>
-                <Text style={styles.compoundMeaning}>: {comp.meaningVi}</Text>
+              <View key={idx} style={[styles.compoundChip, { backgroundColor: theme.bgSurface, borderColor: theme.borderSubtle }]}>
+                <Text style={[styles.compoundExpr, { color: theme.textPrimary }]}>{comp.expression}</Text>
+                <Text style={[styles.compoundReading, { color: theme.accent }]}>({comp.reading})</Text>
+                <Text style={[styles.compoundMeaning, { color: theme.textSecondary }]}>: {comp.meaningVi}</Text>
               </View>
             ))}
           </View>

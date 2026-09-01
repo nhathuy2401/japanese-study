@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { colors } from '../theme/colors';
 import { hapticService } from '../services/haptics/hapticService';
+import { useAppTheme } from '../stores/StoreContext';
 
 interface ButtonProps {
   title: string;
@@ -34,6 +35,8 @@ export const Button: React.FC<ButtonProps> = ({
   textStyle,
   icon,
 }) => {
+  const theme = useAppTheme();
+
   const handlePress = () => {
     if (!disabled && !loading) {
       hapticService.light();
@@ -42,10 +45,10 @@ export const Button: React.FC<ButtonProps> = ({
   };
 
   const getBackgroundColor = () => {
-    if (disabled) return '#334155';
+    if (disabled) return theme.mode === 'light' ? '#E7E0D3' : '#334155';
     switch (variant) {
-      case 'primary': return colors.primary;
-      case 'accent': return colors.accent;
+      case 'primary': return theme.mode === 'light' ? theme.accent : colors.primary;
+      case 'accent': return theme.accent;
       case 'danger': return colors.danger;
       case 'outline': return 'transparent';
       case 'ghost': return 'transparent';
@@ -53,10 +56,10 @@ export const Button: React.FC<ButtonProps> = ({
   };
 
   const getTextColor = () => {
-    if (disabled) return '#94A3B8';
+    if (disabled) return theme.mode === 'light' ? '#A8A29E' : '#94A3B8';
     switch (variant) {
-      case 'outline': return colors.accent;
-      case 'ghost': return colors.dark.textPrimary;
+      case 'outline': return theme.accent;
+      case 'ghost': return theme.textPrimary;
       default: return '#FFFFFF';
     }
   };
@@ -80,7 +83,7 @@ export const Button: React.FC<ButtonProps> = ({
         {
           backgroundColor: getBackgroundColor(),
           borderWidth: variant === 'outline' ? 1.5 : 0,
-          borderColor: variant === 'outline' ? colors.accent : 'transparent',
+          borderColor: variant === 'outline' ? theme.accent : 'transparent',
         },
         style,
       ]}

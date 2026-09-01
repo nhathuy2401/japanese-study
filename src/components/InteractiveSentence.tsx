@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal } from 'react-native';
 import { observer } from 'mobx-react-lite';
 import { JapaneseToken } from '../domain/entities/types';
-import { useSettingsStore, useNotebookStore } from '../stores/StoreContext';
+import { useSettingsStore, useNotebookStore, useAppTheme } from '../stores/StoreContext';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
 import { hapticService } from '../services/haptics/hapticService';
@@ -27,6 +27,7 @@ export const InteractiveSentence: React.FC<InteractiveSentenceProps> = observer(
 }) => {
   const settings = useSettingsStore();
   const notebook = useNotebookStore();
+  const theme = useAppTheme();
   const [selectedToken, setSelectedToken] = useState<JapaneseToken | null>(null);
   const [revealedIds, setRevealedIds] = useState<Record<string, boolean>>({});
 
@@ -34,7 +35,7 @@ export const InteractiveSentence: React.FC<InteractiveSentenceProps> = observer(
   const effectiveTokens = React.useMemo(() => {
     if (tokens && tokens.length > 0) {
       return tokens.map((token, i) => {
-        if (!token.furigana || token.furigana === token.kanji) {
+        if (token.kanji && (!token.furigana || token.furigana === token.kanji)) {
           const segs = parseFurigana(token.kanji);
           const furi = segs
             .map((s) => s.furigana || s.text)
@@ -90,13 +91,13 @@ export const InteractiveSentence: React.FC<InteractiveSentenceProps> = observer(
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.bgSurface, borderColor: theme.borderSubtle }]}>
       {/* Action header with audio button */}
       <View style={styles.headerRow}>
-        <Text style={styles.headerLabel}>CÂU VÍ DỤ TƯƠNG TÁC</Text>
+        <Text style={[styles.headerLabel, { color: theme.textSecondary }]}>CÂU VÍ DỤ TƯƠNG TÁC</Text>
         {onAudioPlay && (
-          <TouchableOpacity onPress={onAudioPlay} style={styles.audioBtn}>
-            <Text style={styles.audioIcon}>🔊 Phát âm</Text>
+          <TouchableOpacity onPress={onAudioPlay} style={[styles.audioBtn, { backgroundColor: theme.bgSubtle }]}>
+            <Text style={[styles.audioIcon, { color: theme.accent }]}>🔊 Phát âm</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -110,7 +111,7 @@ export const InteractiveSentence: React.FC<InteractiveSentenceProps> = observer(
               key={token.id}
               activeOpacity={0.7}
               onPress={() => handleTokenPress(token)}
-              style={styles.tokenPill}
+              style={[styles.tokenPill, { backgroundColor: theme.bgSubtle, borderColor: theme.borderSubtle }]}
             >
               {/* Furigana row */}
               <View style={styles.furiganaContainer}>
@@ -118,6 +119,7 @@ export const InteractiveSentence: React.FC<InteractiveSentenceProps> = observer(
                   <Text
                     style={[
                       styles.furiganaText,
+                      { color: theme.accent },
                       !showFuri && settings.furiganaMode === 'tap-to-reveal' && styles.furiganaMasked,
                     ]}
                   >
@@ -129,10 +131,10 @@ export const InteractiveSentence: React.FC<InteractiveSentenceProps> = observer(
               </View>
 
               {/* Main Kanji/Kana character */}
-              <Text style={styles.mainCharText}>{token.kanji || token.furigana}</Text>
+              <Text style={[styles.mainCharText, { color: theme.textPrimary }]}>{token.kanji || token.furigana}</Text>
 
               {/* Optional Part of Speech hint */}
-              {token.pos && <Text style={styles.posHint}>{token.pos}</Text>}
+              {token.pos && <Text style={[styles.posHint, { color: theme.textTertiary }]}>{token.pos}</Text>}
             </TouchableOpacity>
           );
         })}
@@ -140,12 +142,12 @@ export const InteractiveSentence: React.FC<InteractiveSentenceProps> = observer(
 
       {/* Romaji row if enabled */}
       {settings.showRomaji && romajiSentence && (
-        <Text style={styles.romajiText}>{romajiSentence}</Text>
+        <Text style={[styles.romajiText, { color: theme.textSecondary }]}>{romajiSentence}</Text>
       )}
 
       {/* Vietnamese translation */}
-      <View style={styles.translationBox}>
-        <Text style={styles.translationText}>💬 {meaningVi}</Text>
+      <View style={[styles.translationBox, { backgroundColor: theme.bgSubtle }]}>
+        <Text style={[styles.translationText, { color: theme.textPrimary }]}>💬 {meaningVi}</Text>
       </View>
 
       {/* Quick Inspector Modal for tapped word */}
@@ -160,47 +162,47 @@ export const InteractiveSentence: React.FC<InteractiveSentenceProps> = observer(
           activeOpacity={1}
           onPress={() => setSelectedToken(null)}
         >
-          <View style={styles.modalContent}>
+          <View style={[styles.modalContent, { backgroundColor: theme.bgSurface, borderColor: theme.borderSubtle }]}>
             {selectedToken && (
               <>
                 <View style={styles.modalHeader}>
                   <View>
-                    <Text style={styles.modalKanji}>
+                    <Text style={[styles.modalKanji, { color: theme.textPrimary }]}>
                       {selectedToken.kanji || selectedToken.furigana}
                     </Text>
                     {selectedToken.furigana && selectedToken.furigana !== selectedToken.kanji && (
-                      <Text style={styles.modalReading}>[{selectedToken.furigana}]</Text>
+                      <Text style={[styles.modalReading, { color: theme.accent }]}>[{selectedToken.furigana}]</Text>
                     )}
                   </View>
                   {selectedToken.hanViet && (
-                    <View style={styles.hanVietBadge}>
-                      <Text style={styles.hanVietText}>Hán Việt: {selectedToken.hanViet}</Text>
+                    <View style={[styles.hanVietBadge, { backgroundColor: theme.bgSubtle }]}>
+                      <Text style={[styles.hanVietText, { color: theme.accent }]}>Hán Việt: {selectedToken.hanViet}</Text>
                     </View>
                   )}
                 </View>
 
-                <View style={styles.modalDivider} />
+                <View style={[styles.modalDivider, { backgroundColor: theme.borderSubtle }]} />
 
-                <Text style={styles.modalMeaning}>
-                  Nghĩa: <Text style={styles.modalMeaningBold}>{selectedToken.meaningVi}</Text>
+                <Text style={[styles.modalMeaning, { color: theme.textSecondary }]}>
+                  Nghĩa: <Text style={[styles.modalMeaningBold, { color: theme.textPrimary }]}>{selectedToken.meaningVi}</Text>
                 </Text>
                 {selectedToken.pos && (
-                  <Text style={styles.modalPos}>Từ loại: {selectedToken.pos}</Text>
+                  <Text style={[styles.modalPos, { color: theme.textTertiary }]}>Từ loại: {selectedToken.pos}</Text>
                 )}
 
                 {/* Pitch Accent contour if available */}
                 {selectedToken.pitchPattern && (
                   <View style={styles.pitchSection}>
-                    <Text style={styles.pitchSectionTitle}>Cao độ Pitch Accent:</Text>
+                    <Text style={[styles.pitchSectionTitle, { color: theme.textSecondary }]}>Cao độ Pitch Accent:</Text>
                     <PitchVisualizer pattern={selectedToken.pitchPattern} />
                   </View>
                 )}
 
                 <TouchableOpacity
-                  style={styles.saveNotebookBtn}
+                  style={[styles.saveNotebookBtn, { backgroundColor: theme.mode === 'light' ? theme.accentBg : 'rgba(244, 63, 94, 0.15)', borderColor: theme.accent }]}
                   onPress={handleSaveToNotebook}
                 >
-                  <Text style={styles.saveNotebookText}>⭐ Lưu vào Sổ tay cá nhân</Text>
+                  <Text style={[styles.saveNotebookText, { color: theme.accent }]}>⭐ Lưu vào Sổ tay cá nhân</Text>
                 </TouchableOpacity>
               </>
             )}
