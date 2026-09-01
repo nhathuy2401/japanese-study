@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -8,6 +8,7 @@ import { PitchVisualizer } from '../../src/components/PitchVisualizer';
 import { Button } from '../../src/components/Button';
 import { Card } from '../../src/components/Card';
 import { hapticService } from '../../src/services/haptics/hapticService';
+import { speechService } from '../../src/services/audio/speechService';
 import { useProgressStore, useAppTheme } from '../../src/stores/StoreContext';
 import { PitchPattern } from '../../src/domain/entities/types';
 
@@ -20,6 +21,15 @@ export default observer(function PitchLabScreen() {
   const [isRecording, setIsRecording] = useState(false);
   const [hasRecorded, setHasRecorded] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1.0);
+
+  const targetSentence = 'これ を ください。';
+
+  useEffect(() => {
+    return () => {
+      // Dừng âm thanh ngay khi người dùng thoát màn hình
+      speechService.stop();
+    };
+  }, []);
 
   const samplePattern: PitchPattern = {
     type: 'nakadaka',
@@ -35,12 +45,40 @@ export default observer(function PitchLabScreen() {
     ],
   };
 
-  const handlePlayNative = () => {
+  const handlePlayNative = async () => {
     hapticService.light();
-    setIsPlayingNative(true);
-    setTimeout(() => {
+    if (isPlayingNative) {
+      await speechService.stop();
       setIsPlayingNative(false);
-    }, 1500);
+      return;
+    }
+
+    setIsPlayingNative(true);
+    await speechService.speakJapanese(targetSentence, {
+      rate: playbackSpeed,
+      pitch: 1.0,
+      onStart: () => {
+        setIsPlayingNative(true);
+      },
+      onDone: () => {
+        setIsPlayingNative(false);
+      },
+      onStopped: () => {
+        setIsPlayingNative(false);
+      },
+      onError: () => {
+        setIsPlayingNative(false);
+      },
+    });
+  };
+
+  const handleChangeSpeed = async () => {
+    const nextSpeed = playbackSpeed === 1.0 ? 0.8 : 1.0;
+    setPlaybackSpeed(nextSpeed);
+    if (isPlayingNative) {
+      await speechService.stop();
+      setIsPlayingNative(false);
+    }
   };
 
   const handleToggleRecord = () => {
@@ -94,14 +132,14 @@ export default observer(function PitchLabScreen() {
           <Text style={[styles.sectionHeader, { color: theme.textSecondary }]}>AUDIO MẪU NGƯỜI BẢN XỨ:</Text>
           <View style={styles.audioControlsRow}>
             <Button
-              title={isPlayingNative ? '🔊 Đang phát...' : '▶ Nghe mẫu'}
+              title={isPlayingNative ? '⏹ Dừng nghe mẫu' : '▶ Nghe mẫu'}
               variant="accent"
               onPress={handlePlayNative}
               style={[styles.playBtn, theme.mode === 'light' && { backgroundColor: theme.accent }]}
             />
             <TouchableOpacity
               style={[styles.speedBtn, { backgroundColor: theme.bgSubtle, borderColor: theme.borderSubtle }]}
-              onPress={() => setPlaybackSpeed((prev) => (prev === 1.0 ? 0.8 : 1.0))}
+              onPress={handleChangeSpeed}
             >
               <Text style={[styles.speedBtnText, { color: theme.textPrimary }]}>{playbackSpeed}x Tốc độ</Text>
             </TouchableOpacity>
